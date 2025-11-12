@@ -35,6 +35,30 @@
 
 
     <EditText
+        android:id="@+id/nick_et"
+        android:layout_width="234dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="32dp"
+        android:fontFamily="@font/ubuntu_light"
+        android:hint="Your Nickname"
+        android:textColor="#42A446"
+        android:textColorHint="#7CFFFFFF"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/SignUp_Title"  />
+
+    <ImageView
+        android:id="@+id/image"
+        android:layout_width="264dp"
+        android:layout_height="55dp"
+        app:layout_constraintBottom_toBottomOf="@+id/nick_et"
+        app:layout_constraintEnd_toEndOf="@+id/nick_et"
+        app:layout_constraintStart_toStartOf="@+id/nick_et"
+        app:layout_constraintTop_toTopOf="@+id/nick_et"
+        app:srcCompat="@drawable/usernamecontainer" />
+
+    <EditText
         android:id="@+id/email_et"
         android:layout_width="234dp"
         android:layout_height="48dp"
@@ -44,9 +68,8 @@
         android:textColor="#42A446"
         android:textColorHint="#7CFFFFFF"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/SignUp_Title" />
+        app:layout_constraintTop_toBottomOf="@+id/nick_et" />
 
     <ImageView
         android:id="@+id/mail_container"
@@ -83,28 +106,6 @@
         app:layout_constraintTop_toTopOf="@+id/password_et"
         app:srcCompat="@drawable/passwordcontainer" />
 
-    <EditText
-        android:id="@+id/number_et"
-        android:layout_width="234dp"
-        android:layout_height="48dp"
-        android:layout_marginTop="32dp"
-        android:fontFamily="@font/ubuntu_light"
-        android:hint="Number"
-        android:textColor="#42A446"
-        android:textColorHint="#7CFFFFFF"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/password_et" />
-
-    <ImageView
-        android:id="@+id/image"
-        android:layout_width="264dp"
-        android:layout_height="55dp"
-        app:layout_constraintBottom_toBottomOf="@+id/number_et"
-        app:layout_constraintEnd_toEndOf="@+id/number_et"
-        app:layout_constraintStart_toStartOf="@+id/number_et"
-        app:layout_constraintTop_toTopOf="@+id/number_et"
-        app:srcCompat="@drawable/usernamecontainer" />
 
 
 
@@ -122,7 +123,7 @@
 
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/number_et"
+        app:layout_constraintTop_toBottomOf="@+id/password_et"
         />
 
 

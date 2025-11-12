@@ -37,6 +37,7 @@ public class RegisterActivity extends AppCompatActivity {
         //sign up
         AppCompatButton signUpButton = findViewById(R.id.signUp_btn);
         signUpButton.setOnClickListener(v -> {
+            Toast.makeText(this, "Регистрация успешна!", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(this, MainActivity.class);
             startActivity(intent);
         });
