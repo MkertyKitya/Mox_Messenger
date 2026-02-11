@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
-      home: RegisterPage(),
+      home: LoginPage(),
       theme: lightMode,
     );
   }
