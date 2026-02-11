@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mox_beta/pages/register_page.dart';
 import 'package:mox_beta/themes/light_mode.dart';
 import 'pages/login_page.dart';
 import 'package:mox_beta/firebase_options.dart';
@@ -18,7 +19,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
-      home: LoginPage(),
+      home: RegisterPage(),
       theme: lightMode,
     );
   }
