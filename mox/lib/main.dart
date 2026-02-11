@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mox/themes/light_mode.dart';
 import 'pages/login_page.dart';
 
 void main() {
@@ -12,9 +13,10 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false, 
 
       home: LoginPage(),
+      theme: lightMode,
     ); //Material App
   }
 }
