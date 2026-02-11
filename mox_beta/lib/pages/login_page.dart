@@ -9,6 +9,10 @@ class LoginPage extends StatelessWidget {
   final TextEditingController _pwController = TextEditingController();
   LoginPage({super.key});
 
+  //login page
+
+  void login() {}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,11 +59,33 @@ class LoginPage extends StatelessWidget {
 
             const SizedBox(height: 25),
             // login button
-            MyButton(text: "Login"),
+            MyButton(text: "Login", onTap: login),
+
+            const SizedBox(height: 25),
+
             // register now
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Not a member? ",
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+
+                Text(
+                  "Register now!",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
           ],
-        ), // Column
-      ), // Center
-    ); // Scaffold
+        ),
+      ),
+    );
   }
 }
