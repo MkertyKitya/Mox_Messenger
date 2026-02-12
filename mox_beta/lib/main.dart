@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mox_beta/auth/login_or_register.dart';
+import 'package:mox_beta/auth/auth_gate.dart';
 import 'package:mox_beta/themes/light_mode.dart';
 import 'package:mox_beta/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
-      home: LoginOrRegister(),
+      home: const AuthGate(),
       theme: lightMode,
     );
   }

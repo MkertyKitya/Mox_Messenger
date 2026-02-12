@@ -15,7 +15,19 @@ class RegisterPage extends StatelessWidget {
   RegisterPage({super.key, required this.onTap});
 
   //register method
-  void register() {}
+  void register() {
+    // get auth service
+    final _auth = AuthService();
+  
+    if (_pwController.text == _confirmPwController.text) {
+      try {
+    _auth.signUpWithEmailPassword(
+      _emailController.text,
+      _pwController.text,
+    );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
