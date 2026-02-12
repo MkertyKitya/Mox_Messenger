@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mox_beta/auth/auth_service.dart';
 import 'package:mox_beta/components/my_button.dart';
 import 'package:mox_beta/components/my_textfield.dart';
 
@@ -15,17 +16,31 @@ class RegisterPage extends StatelessWidget {
   RegisterPage({super.key, required this.onTap});
 
   //register method
-  void register() {
+  void register(BuildContext context) {
     // get auth service
     final _auth = AuthService();
-  
+
+    //passwords match -> create user
     if (_pwController.text == _confirmPwController.text) {
       try {
-    _auth.signUpWithEmailPassword(
-      _emailController.text,
-      _pwController.text,
-    );
+        _auth.signUpWithEmailPassword(
+          _emailController.text,
+          _pwController.text,
+        );
+      } catch (e) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(title: Text(e.toString())),
+        );
       }
+    }
+    //passwords don't match -> tell user to fix
+    else {
+      showDialog(
+        context: context,
+        builder: (context) =>
+            const AlertDialog(title: Text("Password don't match!")),
+      );
     }
   }
 
@@ -85,7 +100,7 @@ class RegisterPage extends StatelessWidget {
 
             const SizedBox(height: 25),
             // login button
-            MyButton(text: "Register", onTap: register),
+            MyButton(text: "Register", onTap: () => register(context)),
 
             const SizedBox(height: 25),
 
