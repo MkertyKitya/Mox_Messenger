@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mox_beta/pages/setting_page.dart';
 
 class MyDrawer extends StatelessWidget {
   const MyDrawer({super.key});
