@@ -51,17 +51,22 @@ class HomePage extends StatelessWidget {
     BuildContext context,
   ) {
     // display all users except current user
-    return UserTile(
-      text: userData["email"],
-      onTap: () {
-        // tapped on a user -> go to chat page
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatPage(receiverEmail: userData["email"]),
-          ),
-        );
-      },
-    );
+    if (userData["email"] != _authService.getCurrentUser()!.email) {
+      return UserTile(
+        text: userData["email"],
+        onTap: () {
+          // tapped on a user -> go to chat page
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  ChatPage(receiverEmail: userData["email"]), // ChatPage
+            ), // MaterialPageRoute
+          );
+        },
+      ); // UserTile
+    } else {
+      return Container();
+    }
   }
 }
