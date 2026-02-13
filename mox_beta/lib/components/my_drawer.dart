@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mox_beta/auth/auth_service.dart';
+import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:mox_beta/pages/setting_page.dart';
 
 class MyDrawer extends StatelessWidget {
