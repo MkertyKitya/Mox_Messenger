@@ -1,4 +1,4 @@
-import 'package:mox_beta/auth/auth_service.dart';
+import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:mox_beta/components/my_button.dart';
 import 'package:mox_beta/components/my_textfield.dart';
 import 'package:flutter/material.dart';
