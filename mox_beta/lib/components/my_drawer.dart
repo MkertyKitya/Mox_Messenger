@@ -8,14 +8,61 @@ class MyDrawer extends StatelessWidget {
     return Drawer(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // logo
-          DrawerHeader(
-            child: Center(child: Icon(Icons.message)),
-            // DrawerHeader
-            // home list tile
-            //settings list tile
-            // logout list tile
+          Column(
+            children: [
+              // logo
+              DrawerHeader(
+                child: Center(
+                  child: Icon(
+                    Icons.message,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: 40,
+                  ),
+                ),
+              ),
+              // home list tile
+              Padding(
+                padding: const EdgeInsets.only(left: 5.0),
+                child: ListTile(
+                  title: Text("H O M E"),
+                  leading: Icon(Icons.home),
+                  onTap: () {
+                    //pop the drawer
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+
+              //settings list tile
+              Padding(
+                padding: const EdgeInsets.only(left: 5.0),
+                child: ListTile(
+                  title: Text("S E T T I N G S"),
+                  leading: Icon(Icons.settings),
+                  onTap: () {
+                    //pop the drawer
+                    Navigator.pop(context);
+
+                    //Navigate to settings page
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SettingsPage()),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+          // logout list tile
+          Padding(
+            padding: const EdgeInsets.only(left: 5.0, bottom: 5.0),
+            child: ListTile(
+              title: Text("L O G   O U T"),
+              leading: Icon(Icons.logout),
+              onTap: () {},
+            ),
           ),
         ],
       ),
