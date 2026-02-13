@@ -7,22 +7,25 @@
         
         {
             "name": "mox",
-            "cwd": "mox",
+            "cwd": "mox_beta",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "program": "lib/main.dart"
         },
         {
             "name": "mox (profile mode)",
-            "cwd": "mox",
+            "cwd": "mox_beta",
             "request": "launch",
             "type": "dart",
+            "program": "lib/main.dart",
             "flutterMode": "profile"
         },
         {
             "name": "mox (release mode)",
-            "cwd": "mox",
+            "cwd": "mox_beta",
             "request": "launch",
             "type": "dart",
+            "program": "lib/main.dart",
             "flutterMode": "release"
         }
     ]
