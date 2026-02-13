@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:mox_beta/auth/auth_service.dart';
 import 'package:mox_beta/pages/setting_page.dart';
 
 class MyDrawer extends StatelessWidget {
   const MyDrawer({super.key});
+
+  void logout() {
+    //get auth service
+    final auth = AuthService();
+    auth.signOut();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +69,7 @@ class MyDrawer extends StatelessWidget {
             child: ListTile(
               title: Text("L O G   O U T"),
               leading: Icon(Icons.logout),
-              onTap: () {},
+              onTap: logout,
             ),
           ),
         ],
