@@ -4,6 +4,7 @@ import 'package:mox_beta/components/user_tile.dart';
 import 'package:mox_beta/pages/chat_page.dart';
 import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:mox_beta/services/chat/chat_service.dart';
+import 'package:mox_beta/services/search/search_state.dart';
 
 class HomePage extends StatelessWidget {
   HomePage({super.key});
@@ -19,9 +20,24 @@ class HomePage extends StatelessWidget {
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.grey,
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.search,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => _buildSearch(context)),
+              );
+            },
+          ),
+        ],
       ),
       drawer: const MyDrawer(),
       body: _buildUserList(),
+      //_buildUserList(),
     );
   }
 
@@ -47,6 +63,18 @@ class HomePage extends StatelessWidget {
               .toList(),
         );
       },
+    );
+  }
+
+  Widget _buildSearch(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Search'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.grey,
+        elevation: 0,
+      ),
+      body: UserInformation(),
     );
   }
 

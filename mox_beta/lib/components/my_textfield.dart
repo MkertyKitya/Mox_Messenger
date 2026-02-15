@@ -5,6 +5,9 @@ class MyTextField extends StatelessWidget {
   final bool obscureText;
   final TextEditingController controller;
   final FocusNode? focusNode;
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
+  final Function(String)? onChanged;
 
   const MyTextField({
     super.key,
@@ -12,6 +15,9 @@ class MyTextField extends StatelessWidget {
     required this.obscureText,
     required this.controller,
     this.focusNode,
+    this.prefixIcon,
+    this.suffixIcon,
+    this.onChanged,
   });
 
   @override
@@ -22,7 +28,10 @@ class MyTextField extends StatelessWidget {
         obscureText: obscureText,
         controller: controller,
         focusNode: focusNode,
+        onChanged: onChanged,
         decoration: InputDecoration(
+          prefixIcon: prefixIcon,
+          suffixIcon: suffixIcon,
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(
               color: Theme.of(context).colorScheme.tertiary,
