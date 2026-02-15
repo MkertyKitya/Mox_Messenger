@@ -3,37 +3,44 @@ import 'package:mox_beta/components/my_button.dart';
 import 'package:mox_beta/components/my_textfield.dart';
 import 'package:flutter/material.dart';
 
-class LoginPage extends StatelessWidget {
-  //email and passwd text controller
-
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _pwController = TextEditingController();
-
+class LoginPage extends StatefulWidget {
   // tap to go to register page
   final void Function()? onTap;
 
-  LoginPage({super.key, required this.onTap});
+  const LoginPage({super.key, required this.onTap});
 
-  //login page
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
 
-  void login(BuildContext context) async {
-    // auth service
+class _LoginPageState extends State<LoginPage> {
+  // email and passwd text controller
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _pwController = TextEditingController();
+
+  // login method
+  Future<void> login() async {
     final authService = AuthService();
 
-    // try login
     try {
       await authService.signInWithEmailPassword(
         _emailController.text,
         _pwController.text,
       );
-    }
-    // catch any errors
-    catch (e) {
+    } catch (e) {
+      if (!mounted) return;
       showDialog(
         context: context,
         builder: (context) => AlertDialog(title: Text(e.toString())),
       );
     }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _pwController.dispose();
+    super.dispose();
   }
 
   @override
@@ -82,7 +89,7 @@ class LoginPage extends StatelessWidget {
 
             const SizedBox(height: 25),
             // login button
-            MyButton(text: "Login", onTap: () => login(context)),
+            MyButton(text: "Login", onTap: login),
 
             const SizedBox(height: 25),
 
@@ -98,7 +105,7 @@ class LoginPage extends StatelessWidget {
                 ),
 
                 GestureDetector(
-                  onTap: onTap,
+                  onTap: widget.onTap,
                   child: Text(
                     "Register now!",
                     style: TextStyle(

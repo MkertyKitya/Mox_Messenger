@@ -3,42 +3,62 @@ import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:mox_beta/components/my_button.dart';
 import 'package:mox_beta/components/my_textfield.dart';
 
-class RegisterPage extends StatelessWidget {
-  //email and passwd text controller
+class RegisterPage extends StatefulWidget {
+  // tap to go to login page
+  final void Function()? onTap;
 
+  const RegisterPage({super.key, required this.onTap});
+
+  @override
+  State<RegisterPage> createState() => _RegisterPageState();
+}
+
+class _RegisterPageState extends State<RegisterPage> {
+  // email and passwd text controller
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _pwController = TextEditingController();
   final TextEditingController _confirmPwController = TextEditingController();
+  final TextEditingController _nickController = TextEditingController();
 
-  // tap to go to register page
-  final void Function()? onTap;
-
-  RegisterPage({super.key, required this.onTap});
-
-  //register method
-  void register(BuildContext context) {
-    // get auth service
+  // register method
+  Future<void> register() async {
     final auth = AuthService();
 
-    //passwords match -> create user
-    if (_pwController.text == _confirmPwController.text) {
-      try {
-        auth.signUpWithEmailPassword(_emailController.text, _pwController.text);
-      } catch (e) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(title: Text(e.toString())),
-        );
-      }
-    }
-    //passwords don't match -> tell user to fix
-    else {
+    if (_pwController.text != _confirmPwController.text) {
+      if (!mounted) return;
       showDialog(
         context: context,
         builder: (context) =>
             const AlertDialog(title: Text("Password don't match!")),
       );
+      return;
     }
+
+    try {
+      await auth.signUpWithEmailPassword(
+        _emailController.text.trim(),
+        _pwController.text,
+        _nickController.text.trim(),
+      );
+
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(title: Text(e.toString())),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _pwController.dispose();
+    _confirmPwController.dispose();
+    _nickController.dispose();
+    super.dispose();
   }
 
   @override
@@ -69,6 +89,14 @@ class RegisterPage extends StatelessWidget {
 
             const SizedBox(height: 25),
 
+            // nickname
+            MyTextField(
+              hintText: "Nick name",
+              obscureText: false,
+              controller: _nickController,
+            ),
+
+            const SizedBox(height: 10),
             // email textfield
             MyTextField(
               hintText: "Email",
@@ -96,7 +124,7 @@ class RegisterPage extends StatelessWidget {
 
             const SizedBox(height: 25),
             // login button
-            MyButton(text: "Register", onTap: () => register(context)),
+            MyButton(text: "Register", onTap: register),
 
             const SizedBox(height: 25),
 
@@ -112,7 +140,7 @@ class RegisterPage extends StatelessWidget {
                 ),
 
                 GestureDetector(
-                  onTap: onTap,
+                  onTap: widget.onTap,
                   child: Text(
                     "Login now!",
                     style: TextStyle(

@@ -23,7 +23,7 @@ class AuthService {
       _firestore.collection("Users").doc(userCredential.user!.uid).set({
         'uid': userCredential.user!.uid,
         'email': email,
-      });
+      }, SetOptions(merge: true));
 
       return userCredential;
     } on FirebaseAuthException catch (e) {
@@ -32,20 +32,45 @@ class AuthService {
   }
 
   // sign up
-  Future<UserCredential> signUpWithEmailPassword(String email, password) async {
+  Future<UserCredential> signUpWithEmailPassword(
+    String email,
+    password,
+    String nickname,
+  ) async {
     try {
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
+
+      // update display name on Firebase Auth user
+      if (userCredential.user != null) {
+        await userCredential.user!.updateDisplayName(nickname);
+        await userCredential.user!.reload();
+      }
 
       // save user info in a separate doc
       _firestore.collection("Users").doc(userCredential.user!.uid).set({
         'uid': userCredential.user!.uid,
         'email': email,
+        'nickname': nickname,
       });
 
       return userCredential;
     } on FirebaseAuthException catch (e) {
       throw Exception(e.code);
+    }
+  }
+
+  // update nickname for a user (both Firestore and Auth if current)
+  Future<void> updateNickname(String uid, String nickname) async {
+    // update Firestore
+    await _firestore.collection("Users").doc(uid).set({
+      'nickname': nickname,
+    }, SetOptions(merge: true));
+
+    // if updating current user, update Auth displayName
+    if (_auth.currentUser != null && _auth.currentUser!.uid == uid) {
+      await _auth.currentUser!.updateDisplayName(nickname);
+      await _auth.currentUser!.reload();
     }
   }
 
