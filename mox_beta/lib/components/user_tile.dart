@@ -7,7 +7,6 @@ class UserTile extends StatelessWidget {
   const UserTile({super.key, required this.text, required this.onTap});
 
   @override
-  @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,

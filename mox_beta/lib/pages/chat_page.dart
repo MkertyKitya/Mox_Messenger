@@ -8,11 +8,13 @@ import 'package:mox_beta/services/chat/chat_service.dart';
 class ChatPage extends StatefulWidget {
   final String receiverEmail;
   final String receiverID;
+  final String receiverNickname;
 
   const ChatPage({
     super.key,
     required this.receiverEmail,
     required this.receiverID,
+    required this.receiverNickname,
   });
 
   @override
@@ -87,7 +89,7 @@ class _ChatPageState extends State<ChatPage> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(widget.receiverEmail),
+        title: Text(widget.receiverNickname),
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.grey,
         elevation: 0,

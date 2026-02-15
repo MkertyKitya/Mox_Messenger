@@ -37,6 +37,19 @@ class AuthService {
     password,
     String nickname,
   ) async {
+    final nick = nickname.trim();
+    if (nick.isEmpty) throw Exception('empty-nickname');
+
+    // check nickname exist
+    final q = await _firestore
+        .collection('Users')
+        .where('nickname', isEqualTo: nick)
+        .limit(1)
+        .get();
+    if (q.docs.isNotEmpty) {
+      throw Exception('nickname-already-in-use');
+    }
+
     try {
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
@@ -51,7 +64,7 @@ class AuthService {
       _firestore.collection("Users").doc(userCredential.user!.uid).set({
         'uid': userCredential.user!.uid,
         'email': email,
-        'nickname': nickname,
+        'nickname': nick,
       });
 
       return userCredential;

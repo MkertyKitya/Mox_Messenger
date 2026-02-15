@@ -58,7 +58,7 @@ class HomePage extends StatelessWidget {
     // display all users except current user
     if (userData["email"] != _authService.getCurrentUser()!.email) {
       return UserTile(
-        text: userData["email"],
+        text: userData["nickname"],
         onTap: () {
           // tapped on a user -> go to chat page
           Navigator.push(
@@ -67,6 +67,7 @@ class HomePage extends StatelessWidget {
               builder: (context) => ChatPage(
                 receiverEmail: userData["email"],
                 receiverID: userData["uid"],
+                receiverNickname: userData["nickname"],
               ),
             ),
           );
