@@ -52,12 +52,11 @@ class _LoginPageState extends State<LoginPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // logo
-            Icon(
-              Icons.message,
-              size: 60,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-
+            //  Icon(
+            //    Icons.message,
+            //   size: 60,
+            //    color: Theme.of(context).colorScheme.primary,
+            //  ),
             const SizedBox(height: 50),
 
             // welcome back message
