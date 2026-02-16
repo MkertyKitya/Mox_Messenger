@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:mox_beta/components/my_button.dart';
 import 'package:mox_beta/components/my_textfield.dart';
@@ -70,10 +71,11 @@ class _RegisterPageState extends State<RegisterPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // logo
-            Icon(
-              Icons.message,
-              size: 60,
-              color: Theme.of(context).colorScheme.primary,
+            SvgPicture.asset(
+              'assets/svg/Logo.svg',
+              width: 100,
+              height: 100,
+              fit: BoxFit.contain,
             ),
 
             const SizedBox(height: 50),
@@ -90,10 +92,33 @@ class _RegisterPageState extends State<RegisterPage> {
             const SizedBox(height: 25),
 
             // nickname
-            MyTextField(
-              hintText: "Nick name",
-              obscureText: false,
-              controller: _nickController,
+            SizedBox(
+              width: double.infinity,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                    child: SvgPicture.asset(
+                      'assets/svg/Login_or_Register1.svg',
+                      fit: BoxFit.fill,
+                    ),
+                  ),
+                  Theme(
+                    data: Theme.of(context).copyWith(
+                      colorScheme: Theme.of(context).colorScheme.copyWith(
+                        tertiary: Colors.transparent,
+                        primary: Colors.transparent,
+                      ),
+                    ),
+                    child: MyTextField(
+                      hintText: "Nick name",
+                      obscureText: false,
+                      controller: _nickController,
+                    ),
+                  ),
+                ],
+              ),
             ),
 
             const SizedBox(height: 10),

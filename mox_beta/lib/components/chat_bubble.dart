@@ -18,7 +18,7 @@ class ChatBubble extends StatelessWidget {
     bool isDarkMode = Provider.of<ThemeProvider>(
       context,
       listen: false,
-    ).isDarkMode;
+    ).isLightMode;
 
     return Container(
       decoration: BoxDecoration(

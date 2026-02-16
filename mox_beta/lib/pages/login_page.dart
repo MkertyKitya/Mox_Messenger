@@ -2,6 +2,7 @@ import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:mox_beta/components/my_button.dart';
 import 'package:mox_beta/components/my_textfield.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class LoginPage extends StatefulWidget {
   // tap to go to register page
@@ -52,11 +53,13 @@ class _LoginPageState extends State<LoginPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // logo
-            //  Icon(
-            //    Icons.message,
-            //   size: 60,
-            //    color: Theme.of(context).colorScheme.primary,
-            //  ),
+            SvgPicture.asset(
+              'assets/svg/Logo.svg',
+              width: 100,
+              height: 100,
+              fit: BoxFit.contain,
+            ),
+
             const SizedBox(height: 50),
 
             // welcome back message
@@ -75,7 +78,7 @@ class _LoginPageState extends State<LoginPage> {
               hintText: "Email",
               obscureText: false,
               controller: _emailController,
-            ), // MyTextField
+            ),
 
             const SizedBox(height: 10),
 
@@ -84,7 +87,7 @@ class _LoginPageState extends State<LoginPage> {
               hintText: "Password",
               obscureText: true,
               controller: _pwController,
-            ), // MyTextField
+            ),
 
             const SizedBox(height: 25),
             // login button
