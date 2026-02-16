@@ -38,12 +38,13 @@ class AuthService {
     String nickname,
   ) async {
     final nick = nickname.trim();
+
     if (nick.isEmpty) throw Exception('empty-nickname');
 
     // check nickname exist
     final q = await _firestore
         .collection('Users')
-        .where('nickname', isEqualTo: nick)
+        .where('mail', isEqualTo: nick)
         .limit(1)
         .get();
     if (q.docs.isNotEmpty) {
