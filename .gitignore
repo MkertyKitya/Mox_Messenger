@@ -41,3 +41,5 @@ migrate_working_dir/
 build/
 build/
 lib/firebase_options.dart
+
+lib/firebase_options.dart
