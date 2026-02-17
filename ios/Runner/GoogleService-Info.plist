@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyBlX-kFmDWOpqj4BC_F2eSgg-SETWGx-a4</string>
+	<key>GCM_SENDER_ID</key>
+	<string>91438560795</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.messengermoxbeta.moxBeta</string>
+	<key>PROJECT_ID</key>
+	<string>mox-beta</string>
+	<key>STORAGE_BUCKET</key>
+	<string>mox-beta.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:91438560795:ios:9dec1bd22fe10a4b892abe</string>
+	<key>DATABASE_URL</key>
+	<string>https://mox-beta-default-rtdb.europe-west1.firebasedatabase.app</string>
+</dict>
+</plist>
