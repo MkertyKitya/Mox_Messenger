@@ -92,33 +92,10 @@ class _RegisterPageState extends State<RegisterPage> {
             const SizedBox(height: 25),
 
             // nickname
-            SizedBox(
-              width: double.infinity,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                    child: SvgPicture.asset(
-                      'assets/svg/Login_or_Register1.svg',
-                      fit: BoxFit.fill,
-                    ),
-                  ),
-                  Theme(
-                    data: Theme.of(context).copyWith(
-                      colorScheme: Theme.of(context).colorScheme.copyWith(
-                        tertiary: Colors.transparent,
-                        primary: Colors.transparent,
-                      ),
-                    ),
-                    child: MyTextField(
-                      hintText: "Nick name",
-                      obscureText: false,
-                      controller: _nickController,
-                    ),
-                  ),
-                ],
-              ),
+            MyTextField(
+              hintText: "Nick name",
+              obscureText: false,
+              controller: _nickController,
             ),
 
             const SizedBox(height: 10),
