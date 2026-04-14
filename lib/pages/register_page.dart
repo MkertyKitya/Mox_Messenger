@@ -99,6 +99,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   hintText: "Nick name",
                   obscureText: false,
                   controller: _nickController,
+                  backgroundSvg: 'assets/svg/Login_or_Register1.svg',
                 ),
 
                 const SizedBox(height: 10),
@@ -107,6 +108,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   hintText: "Email",
                   obscureText: false,
                   controller: _emailController,
+                  backgroundSvg: 'assets/svg/Login_or_Register2.svg',
                 ),
 
                 const SizedBox(height: 10),
@@ -116,49 +118,17 @@ class _RegisterPageState extends State<RegisterPage> {
                   hintText: "Password",
                   obscureText: true,
                   controller: _pwController,
+                  backgroundSvg: 'assets/svg/Login_or_Register3.svg',
                 ),
 
                 const SizedBox(height: 10),
 
                 // confirm pw textfield
-                Center(
-                  child: SizedBox(
-                    width: 320,
-                    height: 70,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        SizedBox(
-                          width: 320,
-                          height: 70,
-                          child: SvgPicture.asset(
-                            'assets/svg/Login_or_Register3.svg',
-                            fit: BoxFit.contain,
-                          ),
-                        ),
-                        Positioned.fill(
-                          child: TextField(
-                            controller: _confirmPwController,
-                            obscureText: true,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.onPrimary,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'Confirm password',
-                              hintStyle: TextStyle(
-                                color: Theme.of(context).colorScheme.onPrimary,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 24,
-                                vertical: 20,
-                              ),
-                              border: InputBorder.none,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                MyTextField(
+                  hintText: "Confirm password",
+                  obscureText: true,
+                  controller: _confirmPwController,
+                  backgroundSvg: 'assets/svg/Login_or_Register3.svg',
                 ),
 
                 const SizedBox(height: 25),
