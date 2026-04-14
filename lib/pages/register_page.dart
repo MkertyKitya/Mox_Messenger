@@ -84,8 +84,8 @@ class _RegisterPageState extends State<RegisterPage> {
             Text(
               "Let's create an accout for you!",
               style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontSize: 16,
+                color: Theme.of(context).colorScheme.inversePrimary,
+                fontSize: 24,
               ),
             ),
 
@@ -138,12 +138,12 @@ class _RegisterPageState extends State<RegisterPage> {
                         controller: _confirmPwController,
                         obscureText: true,
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
+                          color: Theme.of(context).colorScheme.onPrimary,
                         ),
                         decoration: InputDecoration(
                           hintText: 'Confirm password',
                           hintStyle: TextStyle(
-                            color: Theme.of(context).colorScheme.primary,
+                            color: Theme.of(context).colorScheme.onPrimary,
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 24,
@@ -159,7 +159,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
 
             const SizedBox(height: 25),
-            // login button
+            // Register button
             MyButton(text: "Register", onTap: register, width: 150, height: 46),
 
             const SizedBox(height: 25),
@@ -171,7 +171,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 Text(
                   "Already have an account? ",
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Theme.of(context).colorScheme.inversePrimary,
                   ),
                 ),
 
@@ -181,7 +181,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     "Login now!",
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),

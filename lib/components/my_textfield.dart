@@ -8,6 +8,7 @@ class MyTextField extends StatelessWidget {
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final Function(String)? onChanged;
+  final String? backgroundSvg;
 
   const MyTextField({
     super.key,
@@ -18,6 +19,7 @@ class MyTextField extends StatelessWidget {
     this.prefixIcon,
     this.suffixIcon,
     this.onChanged,
+    this.backgroundSvg,
   });
 
   @override
@@ -25,7 +27,7 @@ class MyTextField extends StatelessWidget {
     return Center(
       child: SizedBox(
         width: 320,
-        height: 56,
+        height: 70,
         child: TextField(
           obscureText: obscureText,
           controller: controller,
@@ -41,13 +43,15 @@ class MyTextField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderSide: BorderSide(
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context).colorScheme.onPrimary,
               ),
             ),
-            fillColor: Theme.of(context).colorScheme.secondary,
+            fillColor: Theme.of(context).colorScheme.primary,
             filled: true,
             hintText: hintText,
-            hintStyle: TextStyle(color: Theme.of(context).colorScheme.primary),
+            hintStyle: TextStyle(
+              color: Theme.of(context).colorScheme.onPrimary,
+            ),
           ),
         ),
       ),

@@ -66,8 +66,8 @@ class _LoginPageState extends State<LoginPage> {
             Text(
               "Welcome back, you've been missed!",
               style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontSize: 16,
+                color: Theme.of(context).colorScheme.inversePrimary,
+                fontSize: 24,
               ),
             ),
 
@@ -102,7 +102,7 @@ class _LoginPageState extends State<LoginPage> {
                 Text(
                   "Not a member? ",
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Theme.of(context).colorScheme.inversePrimary,
                   ),
                 ),
 
@@ -112,7 +112,7 @@ class _LoginPageState extends State<LoginPage> {
                     "Register now!",
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
