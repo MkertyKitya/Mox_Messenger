@@ -3,6 +3,7 @@ import 'package:mox_beta/components/my_button.dart';
 import 'package:mox_beta/components/my_textfield.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/gestures.dart';
 
 class LoginPage extends StatefulWidget {
   // tap to go to register page
@@ -48,78 +49,86 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // logo
-            SvgPicture.asset(
-              'assets/svg/Logo.svg',
-              width: 100,
-              height: 100,
-              fit: BoxFit.contain,
-            ),
-
-            const SizedBox(height: 50),
-
-            // welcome back message
-            Text(
-              "Welcome back, you've been missed!",
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.inversePrimary,
-                fontSize: 24,
-              ),
-            ),
-
-            const SizedBox(height: 25),
-
-            // email textfield
-            MyTextField(
-              hintText: "Email",
-              obscureText: false,
-              controller: _emailController,
-            ),
-
-            const SizedBox(height: 10),
-
-            // pw textfield
-            MyTextField(
-              hintText: "Password",
-              obscureText: true,
-              controller: _pwController,
-            ),
-
-            const SizedBox(height: 25),
-            // login button
-            MyButton(text: "Login", onTap: login),
-
-            const SizedBox(height: 25),
-
-            // register now
-            Row(
+      body: Stack(
+        children: [
+          Center(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // logo
+                SvgPicture.asset(
+                  'assets/svg/Logo.svg',
+                  width: 100,
+                  height: 100,
+                  fit: BoxFit.contain,
+                ),
+
+                const SizedBox(height: 50),
+
+                // welcome back message
                 Text(
-                  "Not a member? ",
+                  "Welcome back!",
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.inversePrimary,
+                    fontSize: 20,
+                  ),
+                ),
+
+                const SizedBox(height: 25),
+
+                // email textfield
+                MyTextField(
+                  hintText: "Email",
+                  obscureText: false,
+                  controller: _emailController,
+                  backgroundSvg: 'assets/svg/Login_or_Register1.svg',
+                ),
+
+                const SizedBox(height: 10),
+
+                // pw textfield
+                MyTextField(
+                  hintText: "Password",
+                  obscureText: true,
+                  controller: _pwController,
+                  backgroundSvg: 'assets/svg/Login_or_Register3.svg',
+                ),
+
+                const SizedBox(height: 25),
+                // login button
+                MyButton(text: "Login", onTap: login, width: 150, height: 46),
+
+                const SizedBox(height: 25),
+              ],
+            ),
+          ),
+
+          Positioned(
+            bottom: 30,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: RichText(
+                text: TextSpan(
+                  text: "Not a member? ",
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.inversePrimary,
                   ),
-                ),
-
-                GestureDetector(
-                  onTap: widget.onTap,
-                  child: Text(
-                    "Register now!",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  children: [
+                    TextSpan(
+                      text: "Register now!",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      recognizer: TapGestureRecognizer()..onTap = widget.onTap,
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -88,7 +88,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   "Let's create an accout for you!",
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.inversePrimary,
-                    fontSize: 24,
+                    fontSize: 20,
                   ),
                 ),
 
@@ -147,7 +147,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ),
           Positioned(
-            bottom: 20,
+            bottom: 30,
             left: 0,
             right: 0,
             child: Center(
