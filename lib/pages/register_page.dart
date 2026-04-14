@@ -118,19 +118,37 @@ class _RegisterPageState extends State<RegisterPage> {
             const SizedBox(height: 10),
 
             // confirm pw textfield
-            MyTextField(
-              hintText: "Confirm password",
-              obscureText: true,
-              controller: _confirmPwController,
-              prefixIcon: Container(
-                width: 20,
-                height: 20,
-                alignment: Alignment.center,
-                child: SvgPicture.asset(
-                  'assets/svg/Login_or_Register3.svg',
-                  width: 20,
-                  height: 20,
-                  fit: BoxFit.contain,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 25),
+              child: SizedBox(
+                height: 56,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: SvgPicture.asset(
+                        'assets/svg/Login_or_Register3.svg',
+                        fit: BoxFit.fill,
+                      ),
+                    ),
+                    TextField(
+                      controller: _confirmPwController,
+                      obscureText: true,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Confirm password',
+                        hintStyle: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 16,
+                        ),
+                        border: InputBorder.none,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
