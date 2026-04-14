@@ -118,34 +118,39 @@ class _RegisterPageState extends State<RegisterPage> {
             const SizedBox(height: 10),
 
             // confirm pw textfield
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 25),
+            Center(
               child: SizedBox(
-                height: 56,
+                width: 320,
+                height: 70,
                 child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    Positioned.fill(
+                    SizedBox(
+                      width: 320,
+                      height: 70,
                       child: SvgPicture.asset(
                         'assets/svg/Login_or_Register3.svg',
-                        fit: BoxFit.fill,
+                        fit: BoxFit.contain,
                       ),
                     ),
-                    TextField(
-                      controller: _confirmPwController,
-                      obscureText: true,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Confirm password',
-                        hintStyle: TextStyle(
+                    Positioned.fill(
+                      child: TextField(
+                        controller: _confirmPwController,
+                        obscureText: true,
+                        style: TextStyle(
                           color: Theme.of(context).colorScheme.primary,
                         ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 16,
+                        decoration: InputDecoration(
+                          hintText: 'Confirm password',
+                          hintStyle: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 20,
+                          ),
+                          border: InputBorder.none,
                         ),
-                        border: InputBorder.none,
                       ),
                     ),
                   ],

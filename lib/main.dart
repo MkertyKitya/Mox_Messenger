@@ -24,6 +24,18 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        final mediaQuery = MediaQuery.of(context);
+        return MediaQuery(
+          data: mediaQuery.copyWith(textScaler: const TextScaler.linear(1)),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 430),
+              child: child ?? const SizedBox.shrink(),
+            ),
+          ),
+        );
+      },
 
       home: const AuthGate(),
       theme: Provider.of<ThemeProvider>(context).themeData,
