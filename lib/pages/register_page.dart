@@ -122,6 +122,17 @@ class _RegisterPageState extends State<RegisterPage> {
               hintText: "Confirm password",
               obscureText: true,
               controller: _confirmPwController,
+              prefixIcon: Container(
+                width: 20,
+                height: 20,
+                alignment: Alignment.center,
+                child: SvgPicture.asset(
+                  'assets/svg/Login_or_Register3.svg',
+                  width: 20,
+                  height: 20,
+                  fit: BoxFit.contain,
+                ),
+              ),
             ),
 
             const SizedBox(height: 25),
