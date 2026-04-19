@@ -24,7 +24,7 @@ class HomePage extends StatelessWidget {
           IconButton(
             icon: Icon(
               Icons.search,
-              color: Theme.of(context).colorScheme.primary,
+              color: Theme.of(context).colorScheme.onPrimary,
             ),
             onPressed: () {
               Navigator.push(
