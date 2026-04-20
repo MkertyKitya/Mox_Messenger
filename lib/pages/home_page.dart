@@ -5,6 +5,7 @@ import 'package:mox_beta/pages/chat_page.dart';
 import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:mox_beta/services/chat/chat_service.dart';
 import 'package:mox_beta/services/search/search_state.dart';
+import 'package:mox_beta/components/user_avatar.dart';
 
 class HomePage extends StatelessWidget {
   HomePage({super.key});
@@ -87,6 +88,11 @@ class HomePage extends StatelessWidget {
     if (userData["email"] != _authService.getCurrentUser()!.email) {
       return UserTile(
         text: userData["nickname"],
+        avatar: UserAvatar(
+          isOnline: true,
+          nickname: userData["nickname"],
+          size: 48,
+        ),
         onTap: () {
           // tapped on a user -> go to chat page
           Navigator.push(

@@ -18,10 +18,22 @@ class UserAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // TODO: implement build
-    return Stack(children: [
-        
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        _buildAvatar(),
+
+        Positioned(
+          left: -size * 0.05,
+          top: (size - size * 0.6) / 2,
+          child: SvgPicture.asset(
+            isOnline
+                ? 'assets/svg/OnlineTrue.svg'
+                : 'assets/svg/OnlineFalse.svg',
+            height: size * 0.6,
+          ),
+        ),
       ],
-    
     );
   }
 
@@ -46,7 +58,7 @@ class UserAvatar extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: Colors.green,
+        color: Color.fromARGB(254, 81, 181, 21),
       ),
       alignment: Alignment.center,
       child: Text(
@@ -61,8 +73,7 @@ class UserAvatar extends StatelessWidget {
     if (parts.isEmpty) return '?';
 
     if (parts.length == 1) {
-      final word = parts.first;
-      return word.substring(0, 0).toUpperCase();
+      return (parts[0][0]).toUpperCase();
     }
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }

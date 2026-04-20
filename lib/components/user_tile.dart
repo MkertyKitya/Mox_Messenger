@@ -3,8 +3,14 @@ import 'package:flutter/material.dart';
 class UserTile extends StatelessWidget {
   final String text;
   final void Function()? onTap;
+  final Widget? avatar;
 
-  const UserTile({super.key, required this.text, required this.onTap});
+  const UserTile({
+    super.key,
+    required this.text,
+    required this.onTap,
+    this.avatar,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +26,7 @@ class UserTile extends StatelessWidget {
         child: Row(
           children: [
             // icon
-            const Icon(Icons.person),
+            avatar ?? const Icon(Icons.person),
             const SizedBox(width: 20),
             // user name
             Text(text),
