@@ -42,6 +42,7 @@ class MyTextField extends StatelessWidget {
 
             Positioned.fill(
               child: TextField(
+                cursorColor: Theme.of(context).colorScheme.onPrimary,
                 obscureText: obscureText,
                 controller: controller,
                 focusNode: focusNode,

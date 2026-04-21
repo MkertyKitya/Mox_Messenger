@@ -6,6 +6,7 @@ import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:mox_beta/services/chat/chat_service.dart';
 import 'package:mox_beta/services/search/search_state.dart';
 import 'package:mox_beta/components/user_avatar.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class HomePage extends StatelessWidget {
   HomePage({super.key});
@@ -17,16 +18,35 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Home'),
+        title: Container(
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.tertiary,
+            borderRadius: BorderRadius.circular(50),
+          ),
+          child: TextField(
+            cursorColor: Theme.of(context).colorScheme.onPrimary,
+            decoration: InputDecoration(
+              hintText: 'Search chats',
+              border: InputBorder.none,
+            ),
+          ),
+        ),
+
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.grey,
         elevation: 0,
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: SvgPicture.asset('assets/svg/Menu_Button.svg'),
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
+        ),
+
         actions: [
           IconButton(
-            icon: Icon(
-              Icons.search,
-              color: Theme.of(context).colorScheme.onPrimary,
-            ),
+            icon: SvgPicture.asset('assets/svg/Search.svg'),
             onPressed: () {
               Navigator.push(
                 context,
@@ -36,9 +56,16 @@ class HomePage extends StatelessWidget {
           ),
         ],
       ),
+
       drawer: const MyDrawer(),
-      body: _buildUserList(),
-      //_buildUserList(),
+      body: Column(
+        children: [
+          SvgPicture.asset('assets/svg/Line.svg'),
+          Expanded(child: _buildUserList()),
+        ],
+
+        //_buildUserList(),
+      ),
     );
   }
 
