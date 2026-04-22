@@ -17,7 +17,6 @@ class UserAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Stack(
       clipBehavior: Clip.none,
       children: [
