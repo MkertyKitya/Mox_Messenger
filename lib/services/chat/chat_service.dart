@@ -1,11 +1,15 @@
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:mox_beta/models/message.dart';
 
 class ChatService {
   // get instanse of firestore & auth
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   String _chatRoomId(String uid1, String uid2) {
     final ids = [uid1, uid2]..sort();
@@ -53,6 +57,7 @@ class ChatService {
       receiverID: receiverID,
       message: message,
       timestamp: timestamp,
+      type: 'text',
       readed: false,
     );
 
@@ -60,6 +65,65 @@ class ChatService {
     String chatRoomID = _chatRoomId(currentUserID, receiverID);
 
     // add new message to database
+    await _firestore
+        .collection("chat_rooms")
+        .doc(chatRoomID)
+        .collection("messages")
+        .add(newMessage.toMap());
+  }
+
+  String _mediaLabel(String type, String? fallback) {
+    if (fallback != null && fallback.trim().isNotEmpty) {
+      return fallback;
+    }
+
+    switch (type) {
+      case 'image':
+        return 'Фото';
+      case 'video':
+        return 'Видео';
+      case 'audio':
+        return 'Голосовое сообщение';
+      default:
+        return '';
+    }
+  }
+
+  Future<void> sendMediaMessage({
+    required String receiverID,
+    required String type,
+    required Uint8List bytes,
+    required String fileName,
+    required String contentType,
+  }) async {
+    final String currentUserID = _auth.currentUser!.uid;
+    final String currentUserEmail = _auth.currentUser!.email!;
+    final Timestamp timestamp = Timestamp.now();
+
+    final chatRoomID = _chatRoomId(currentUserID, receiverID);
+    final safeName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+    final storagePath =
+        'chat_media/$chatRoomID/${timestamp.millisecondsSinceEpoch}_$safeName';
+
+    final ref = _storage.ref().child(storagePath);
+    final metadata = SettableMetadata(contentType: contentType);
+    await ref.putData(bytes, metadata);
+    final mediaUrl = await ref.getDownloadURL();
+
+    final newMessage = Message(
+      senderID: currentUserID,
+      senderEmail: currentUserEmail,
+      receiverID: receiverID,
+      message: _mediaLabel(type, null),
+      timestamp: timestamp,
+      type: type,
+      mediaUrl: mediaUrl,
+      mediaName: fileName,
+      mediaMime: contentType,
+      mediaSize: bytes.length,
+      readed: false,
+    );
+
     await _firestore
         .collection("chat_rooms")
         .doc(chatRoomID)

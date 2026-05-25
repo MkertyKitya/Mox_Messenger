@@ -39,6 +39,11 @@ dependencies:
   firebase_auth: ^6.1.4
   cloud_firestore: ^6.1.2
   provider: ^6.1.5+1
+  firebase_storage: ^13.1.2
+  image_picker: ^1.1.2
+  path_provider: ^2.1.4
+  record: ^6.2.1
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:

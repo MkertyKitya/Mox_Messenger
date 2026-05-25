@@ -23,6 +23,23 @@ class HomePage extends StatelessWidget {
     return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
   }
 
+  String _lastMessageLabel(Map<String, dynamic>? last) {
+    if (last == null) return '';
+    final message = (last['message'] ?? '').toString();
+    if (message.trim().isNotEmpty) return message;
+
+    switch (last['type']) {
+      case 'image':
+        return 'Фото';
+      case 'video':
+        return 'Видео';
+      case 'audio':
+        return 'Голосовое сообщение';
+      default:
+        return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -121,7 +138,7 @@ class HomePage extends StatelessWidget {
           builder: (context, unreadSnapshot) {
             final last = snapshot.data;
 
-            final lastMessage = last?["message"] ?? "";
+            final lastMessage = _lastMessageLabel(last);
             final timestamp = last?["timestamp"];
             final time = timestamp != null ? _formatTime(timestamp) : "00:00";
 
@@ -149,6 +166,8 @@ class HomePage extends StatelessWidget {
                       receiverEmail: userData["email"],
                       receiverID: userData["uid"],
                       receiverNickname: userData["nickname"],
+                      receiverPhone: userData["phone"],
+                      receiverIsOnline: userData["isOnline"] ?? false,
                     ),
                   ),
                 );

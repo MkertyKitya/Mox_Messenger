@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Allow access to the microphone for voice messages.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allow access to photos and videos for sending media.</string>
 </dict>
 </plist>

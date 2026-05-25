@@ -6,6 +6,11 @@ class Message {
   final String receiverID;
   final String message;
   final Timestamp timestamp;
+  final String type;
+  final String? mediaUrl;
+  final String? mediaName;
+  final String? mediaMime;
+  final int? mediaSize;
   final bool readed;
   final Timestamp? readAt;
 
@@ -15,6 +20,11 @@ class Message {
     required this.receiverID,
     required this.message,
     required this.timestamp,
+    this.type = 'text',
+    this.mediaUrl,
+    this.mediaName,
+    this.mediaMime,
+    this.mediaSize,
     this.readed = false,
     this.readAt,
   });
@@ -27,8 +37,22 @@ class Message {
       'receiverID': receiverID,
       'message': message,
       'timestamp': timestamp,
+      'type': type,
       'readed': readed,
     };
+
+    if (mediaUrl != null) {
+      map['mediaUrl'] = mediaUrl;
+    }
+    if (mediaName != null) {
+      map['mediaName'] = mediaName;
+    }
+    if (mediaMime != null) {
+      map['mediaMime'] = mediaMime;
+    }
+    if (mediaSize != null) {
+      map['mediaSize'] = mediaSize;
+    }
 
     if (readAt != null) {
       map['readAt'] = readAt;
