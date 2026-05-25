@@ -1,18 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:mox_beta/components/my_drawer.dart';
 import 'package:mox_beta/components/user_tile.dart';
+import 'package:mox_beta/components/user_avatar.dart';
+
 import 'package:mox_beta/pages/chat_page.dart';
+
 import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:mox_beta/services/chat/chat_service.dart';
 import 'package:mox_beta/services/search/search_state.dart';
-import 'package:mox_beta/components/user_avatar.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class HomePage extends StatelessWidget {
   HomePage({super.key});
 
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
+
+  String _formatTime(Timestamp ts) {
+    final dt = ts.toDate();
+    return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -27,13 +36,12 @@ class HomePage extends StatelessWidget {
           ),
           child: TextField(
             cursorColor: Theme.of(context).colorScheme.onPrimary,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               hintText: 'Search chats',
               border: InputBorder.none,
             ),
           ),
         ),
-
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.grey,
         elevation: 0,
@@ -43,7 +51,6 @@ class HomePage extends StatelessWidget {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-
         actions: [
           IconButton(
             icon: SvgPicture.asset('assets/svg/Search.svg'),
@@ -56,35 +63,24 @@ class HomePage extends StatelessWidget {
           ),
         ],
       ),
-
       drawer: const MyDrawer(),
       body: Column(
         children: [
           SvgPicture.asset('assets/svg/Line.svg'),
           Expanded(child: _buildUserList()),
         ],
-
-        //_buildUserList(),
       ),
     );
   }
 
-  // build a list of users except for the current logged in user
   Widget _buildUserList() {
     return StreamBuilder(
       stream: _chatService.getUsersStream(),
       builder: (context, snapshot) {
-        // error
-        if (snapshot.hasError) {
-          return const Text("Error");
-        }
-
-        // loading..
+        if (snapshot.hasError) return const Text("Error");
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Text("Loading..");
         }
-
-        // return list view
         return ListView(
           children: snapshot.data!
               .map<Widget>((userData) => _buildUserListItem(userData, context))
@@ -106,36 +102,58 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  // build individual list tile for user
   Widget _buildUserListItem(
     Map<String, dynamic> userData,
     BuildContext context,
   ) {
-    // display all users except current user
-    if (userData["email"] != _authService.getCurrentUser()!.email) {
-      return UserTile(
-        text: userData["nickname"],
-        avatar: UserAvatar(
-          isOnline: true,
-          nickname: userData["nickname"],
-          size: 48,
-        ),
-        onTap: () {
-          // tapped on a user -> go to chat page
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ChatPage(
-                receiverEmail: userData["email"],
-                receiverID: userData["uid"],
-                receiverNickname: userData["nickname"],
-              ),
-            ),
-          );
-        },
-      );
-    } else {
+    final currentUid = _authService.getCurrentUser()!.uid;
+    final otherUid = userData["uid"];
+
+    if (userData["email"] == _authService.getCurrentUser()!.email) {
       return Container();
     }
+
+    return StreamBuilder(
+      stream: _chatService.getLastMessage(currentUid, otherUid),
+      builder: (context, snapshot) {
+        final last = snapshot.data;
+
+        final lastMessage = last?["message"] ?? "";
+        final timestamp = last?["timestamp"];
+        final time = timestamp != null ? _formatTime(timestamp) : "00:00";
+
+        final readed = last?["senderID"] == currentUid
+            ? (last?["readed"] ?? false)
+            : true;
+
+        final unread = last?["senderID"] != currentUid
+            ? (last?["unread"] ?? 0)
+            : 0;
+
+        return UserTile(
+          name: userData["nickname"],
+          lastMessage: lastMessage,
+          time: time,
+          unread: unread,
+          readed: readed,
+          avatar: UserAvatar(
+            nickname: userData["nickname"],
+            isOnline: userData["isOnline"] ?? false,
+          ),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ChatPage(
+                  receiverEmail: userData["email"],
+                  receiverID: userData["uid"],
+                  receiverNickname: userData["nickname"],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 }

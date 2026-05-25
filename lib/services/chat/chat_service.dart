@@ -76,4 +76,23 @@ class ChatService {
         .orderBy("timestamp", descending: false)
         .snapshots();
   }
+
+  Stream<Map<String, dynamic>?> getLastMessage(String uid1, String uid2) {
+    // создаём chatRoomID так же, как в sendMessage
+    List<String> ids = [uid1, uid2];
+    ids.sort();
+    String chatRoomID = ids.join('_');
+
+    return _firestore
+        .collection("chat_rooms")
+        .doc(chatRoomID)
+        .collection("messages")
+        .orderBy("timestamp", descending: true)
+        .limit(1)
+        .snapshots()
+        .map((snap) {
+          if (snap.docs.isEmpty) return null;
+          return snap.docs.first.data();
+        });
+  }
 }
