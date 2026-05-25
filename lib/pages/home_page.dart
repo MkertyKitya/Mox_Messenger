@@ -116,40 +116,45 @@ class HomePage extends StatelessWidget {
     return StreamBuilder(
       stream: _chatService.getLastMessage(currentUid, otherUid),
       builder: (context, snapshot) {
-        final last = snapshot.data;
+        return StreamBuilder<int>(
+          stream: _chatService.getUnreadCount(currentUid, otherUid),
+          builder: (context, unreadSnapshot) {
+            final last = snapshot.data;
 
-        final lastMessage = last?["message"] ?? "";
-        final timestamp = last?["timestamp"];
-        final time = timestamp != null ? _formatTime(timestamp) : "00:00";
+            final lastMessage = last?["message"] ?? "";
+            final timestamp = last?["timestamp"];
+            final time = timestamp != null ? _formatTime(timestamp) : "00:00";
 
-        final readed = last?["senderID"] == currentUid
-            ? (last?["readed"] ?? false)
-            : true;
+            final readed = last?["senderID"] == currentUid
+                ? (last?["readed"] ?? false)
+                : true;
 
-        final unread = last?["senderID"] != currentUid
-            ? (last?["unread"] ?? 0)
-            : 0;
+            final unread = last?["senderID"] != currentUid
+                ? (unreadSnapshot.data ?? 0)
+                : 0;
 
-        return UserTile(
-          name: userData["nickname"],
-          lastMessage: lastMessage,
-          time: time,
-          unread: unread,
-          readed: readed,
-          avatar: UserAvatar(
-            nickname: userData["nickname"],
-            isOnline: userData["isOnline"] ?? false,
-          ),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ChatPage(
-                  receiverEmail: userData["email"],
-                  receiverID: userData["uid"],
-                  receiverNickname: userData["nickname"],
-                ),
+            return UserTile(
+              name: userData["nickname"],
+              lastMessage: lastMessage,
+              time: time,
+              unread: unread,
+              readed: readed,
+              avatar: UserAvatar(
+                nickname: userData["nickname"],
+                isOnline: userData["isOnline"] ?? false,
               ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChatPage(
+                      receiverEmail: userData["email"],
+                      receiverID: userData["uid"],
+                      receiverNickname: userData["nickname"],
+                    ),
+                  ),
+                );
+              },
             );
           },
         );

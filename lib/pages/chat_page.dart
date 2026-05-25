@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:mox_beta/components/chat_bubble.dart';
@@ -32,9 +34,24 @@ class _ChatPageState extends State<ChatPage> {
   // for textfield focus
   FocusNode myFocusNode = FocusNode();
 
+  // scroll controller
+  final ScrollController _scrollController = ScrollController();
+
+  late final String _currentUserId;
+  late final Stream<QuerySnapshot> _messageStream;
+  StreamSubscription<QuerySnapshot>? _messageSub;
+
   @override
   void initState() {
     super.initState();
+
+    _currentUserId = _authService.getCurrentUser()!.uid;
+    _messageStream = _chatService.getMessages(
+      widget.receiverID,
+      _currentUserId,
+    );
+
+    _messageSub = _messageStream.listen(_handleMessageSnapshot);
 
     // add listener to focus node
     myFocusNode.addListener(() {
@@ -50,15 +67,25 @@ class _ChatPageState extends State<ChatPage> {
     Future.delayed(const Duration(milliseconds: 500), () => scrollDown());
   }
 
+  void _handleMessageSnapshot(QuerySnapshot snapshot) {
+    final unreadDocs = snapshot.docs.where((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+      return data['receiverID'] == _currentUserId && data['readed'] != true;
+    }).toList();
+
+    if (unreadDocs.isNotEmpty) {
+      _chatService.markMessagesAsRead(unreadDocs);
+    }
+  }
+
   @override
   void dispose() {
     myFocusNode.dispose();
     _messageController.dispose();
+    _scrollController.dispose();
+    _messageSub?.cancel();
     super.dispose();
   }
-
-  // scroll controller
-  final ScrollController _scrollController = ScrollController();
 
   void scrollDown() {
     _scrollController.animateTo(
@@ -108,9 +135,8 @@ class _ChatPageState extends State<ChatPage> {
 
   // build message list
   Widget _buildMessageList() {
-    String senderID = _authService.getCurrentUser()!.uid;
     return StreamBuilder(
-      stream: _chatService.getMessages(widget.receiverID, senderID),
+      stream: _messageStream,
       builder: (context, snapshot) {
         // errors
         if (snapshot.hasError) {
@@ -138,7 +164,7 @@ class _ChatPageState extends State<ChatPage> {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
     // is current user
-    bool isCurrentUser = data['senderID'] == _authService.getCurrentUser()!.uid;
+    bool isCurrentUser = data['senderID'] == _currentUserId;
 
     // align message to the right if sender is the current user, otherwise left
     var alignment = isCurrentUser

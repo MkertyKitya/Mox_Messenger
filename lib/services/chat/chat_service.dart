@@ -6,6 +6,12 @@ class ChatService {
   // get instanse of firestore & auth
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  String _chatRoomId(String uid1, String uid2) {
+    final ids = [uid1, uid2]..sort();
+    return ids.join('_');
+  }
+
   // get user stream
   /*
   List<Map<String,dynamic> =
@@ -34,7 +40,7 @@ class ChatService {
   // get user stream
 
   // send message
-  Future<void> sendMessage(String receiverID, message) async {
+  Future<void> sendMessage(String receiverID, String message) async {
     // get current user info
     final String currentUserID = _auth.currentUser!.uid;
     final String currentUserEmail = _auth.currentUser!.email!;
@@ -47,12 +53,11 @@ class ChatService {
       receiverID: receiverID,
       message: message,
       timestamp: timestamp,
+      readed: false,
     );
 
     // construct chat room ID for the two users (sorted to ensure uniqueness)
-    List<String> ids = [currentUserID, receiverID];
-    ids.sort(); // sort the ids (this ensure the chatroomID is the same for any 2 people)
-    String chatRoomID = ids.join('_');
+    String chatRoomID = _chatRoomId(currentUserID, receiverID);
 
     // add new message to database
     await _firestore
@@ -65,9 +70,7 @@ class ChatService {
   // get messages
   Stream<QuerySnapshot> getMessages(String userID, otherUserID) {
     // construct a chatroom ID for the two users
-    List<String> ids = [userID, otherUserID];
-    ids.sort();
-    String chatRoomID = ids.join('_');
+    String chatRoomID = _chatRoomId(userID, otherUserID);
 
     return _firestore
         .collection("chat_rooms")
@@ -79,9 +82,7 @@ class ChatService {
 
   Stream<Map<String, dynamic>?> getLastMessage(String uid1, String uid2) {
     // создаём chatRoomID так же, как в sendMessage
-    List<String> ids = [uid1, uid2];
-    ids.sort();
-    String chatRoomID = ids.join('_');
+    String chatRoomID = _chatRoomId(uid1, uid2);
 
     return _firestore
         .collection("chat_rooms")
@@ -94,5 +95,35 @@ class ChatService {
           if (snap.docs.isEmpty) return null;
           return snap.docs.first.data();
         });
+  }
+
+  Stream<int> getUnreadCount(String currentUserID, String otherUserID) {
+    final chatRoomID = _chatRoomId(currentUserID, otherUserID);
+    return _firestore
+        .collection("chat_rooms")
+        .doc(chatRoomID)
+        .collection("messages")
+        .where("receiverID", isEqualTo: currentUserID)
+        .where("readed", isEqualTo: false)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.length);
+  }
+
+  Future<void> markMessagesAsRead(List<QueryDocumentSnapshot> docs) async {
+    if (docs.isEmpty) return;
+
+    const int batchLimit = 400;
+    final now = Timestamp.now();
+
+    for (int i = 0; i < docs.length; i += batchLimit) {
+      final batch = _firestore.batch();
+      final chunk = docs.skip(i).take(batchLimit);
+
+      for (final doc in chunk) {
+        batch.update(doc.reference, {'readed': true, 'readAt': now});
+      }
+
+      await batch.commit();
+    }
   }
 }
