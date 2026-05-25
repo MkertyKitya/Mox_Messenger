@@ -104,9 +104,13 @@ class ChatService {
         .doc(chatRoomID)
         .collection("messages")
         .where("receiverID", isEqualTo: currentUserID)
-        .where("readed", isEqualTo: false)
         .snapshots()
-        .map((snapshot) => snapshot.docs.length);
+        .map(
+          (snapshot) => snapshot.docs.where((doc) {
+            final data = doc.data();
+            return data['readed'] != true;
+          }).length,
+        );
   }
 
   Future<void> markMessagesAsRead(List<QueryDocumentSnapshot> docs) async {

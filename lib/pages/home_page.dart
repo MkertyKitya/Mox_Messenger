@@ -129,9 +129,7 @@ class HomePage extends StatelessWidget {
                 ? (last?["readed"] ?? false)
                 : true;
 
-            final unread = last?["senderID"] != currentUid
-                ? (unreadSnapshot.data ?? 0)
-                : 0;
+            final unread = unreadSnapshot.data ?? 0;
 
             return UserTile(
               name: userData["nickname"],
