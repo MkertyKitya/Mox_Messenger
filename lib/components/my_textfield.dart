@@ -23,8 +23,21 @@ class MyTextField extends StatelessWidget {
     this.backgroundSvg,
   });
 
+  //оптимизация
+  static final Map<String, Widget> _svgCache = {};
+
+  Widget? _getCachedSvg(String? path) {
+    if (path == null) return null;
+    return _svgCache.putIfAbsent(
+      path,
+      () => SvgPicture.asset(path, fit: BoxFit.contain),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bg = _getCachedSvg(backgroundSvg);
+
     return Center(
       child: SizedBox(
         width: 320,
@@ -32,13 +45,7 @@ class MyTextField extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            //если svg background передан
-            if (backgroundSvg != null)
-              SizedBox(
-                width: 320,
-                height: 70,
-                child: SvgPicture.asset(backgroundSvg!, fit: BoxFit.contain),
-              ),
+            if (bg != null) SizedBox(width: 320, height: 70, child: bg),
 
             Positioned.fill(
               child: TextField(
@@ -50,18 +57,6 @@ class MyTextField extends StatelessWidget {
                 decoration: InputDecoration(
                   prefixIcon: prefixIcon,
                   suffixIcon: suffixIcon,
-                  //enabledBorder: OutlineInputBorder(
-                  //borderSide: BorderSide(
-                  //  color: Theme.of(context).colorScheme.tertiary,
-                  //),
-                  //),
-                  //focusedBorder: OutlineInputBorder(
-                  // borderSide: BorderSide(
-                  // color: Theme.of(context).colorScheme.onPrimary,
-                  //),
-                  // ),
-                  //fillColor: Theme.of(context).colorScheme.primary,
-                  //filled: true,
                   hintText: hintText,
                   hintStyle: TextStyle(
                     color: Theme.of(context).colorScheme.onPrimary,

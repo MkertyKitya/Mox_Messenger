@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mox_beta/models/svg_icons.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -35,24 +36,18 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  // text controller
   final TextEditingController _messageController = TextEditingController();
-
-  // chat & auth services
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
   final ImagePicker _imagePicker = ImagePicker();
   final AudioRecorder _recorder = AudioRecorder();
-
-  // for textfield focus
-  FocusNode myFocusNode = FocusNode();
-
-  // scroll controller
+  final FocusNode myFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
 
   late final String _currentUserId;
-  late final Stream<QuerySnapshot> _messageStream;
-  StreamSubscription<QuerySnapshot>? _messageSub;
+
+  Stream<QuerySnapshot>? _messageStream; // <--- теперь nullable
+
   bool _hasText = false;
   bool _isRecording = false;
   bool _isUploadingMedia = false;
@@ -62,82 +57,24 @@ class _ChatPageState extends State<ChatPage> {
     super.initState();
 
     _currentUserId = _authService.getCurrentUser()!.uid;
-    _messageStream = _chatService.getMessages(
-      widget.receiverID,
-      _currentUserId,
-    );
-
-    _messageSub = _messageStream.listen(_handleMessageSnapshot);
 
     _messageController.addListener(_handleTextChanged);
 
-    // add listener to focus node
     myFocusNode.addListener(() {
       if (myFocusNode.hasFocus) {
-        // cause a delay so that the keyboard has time to show up
-        // then the amount of remaining space will be calculated,
-        // then scroll down
-        Future.delayed(const Duration(milliseconds: 500), () => scrollDown());
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollDown());
       }
     });
 
-    // wait a bit for listview to be built, then scroll to bottom
-    Future.delayed(const Duration(milliseconds: 500), () => scrollDown());
-  }
-
-  void _handleMessageSnapshot(QuerySnapshot snapshot) {
-    final unreadDocs = snapshot.docs.where((doc) {
-      final data = doc.data() as Map<String, dynamic>;
-      return data['receiverID'] == _currentUserId && data['readed'] != true;
-    }).toList();
-
-    if (unreadDocs.isNotEmpty) {
-      _chatService.markMessagesAsRead(unreadDocs);
-    }
-  }
-
-  void _handleTextChanged() {
-    final hasText = _messageController.text.trim().isNotEmpty;
-    if (hasText == _hasText) return;
-    setState(() {
-      _hasText = hasText;
+    // 🔥 Подключаем Firestore ТОЛЬКО после первого кадра
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        _messageStream = _chatService.getMessages(
+          widget.receiverID,
+          _currentUserId,
+        );
+      });
     });
-  }
-
-  String _mediaFallbackName(String type) {
-    final stamp = DateTime.now().millisecondsSinceEpoch;
-    switch (type) {
-      case 'image':
-        return 'image_$stamp.jpg';
-      case 'video':
-        return 'video_$stamp.mp4';
-      case 'audio':
-        return 'voice_$stamp.m4a';
-      default:
-        return 'file_$stamp';
-    }
-  }
-
-  String _guessContentType(String type, String fileName) {
-    final parts = fileName.toLowerCase().split('.');
-    final ext = parts.length > 1 ? parts.last : '';
-
-    switch (type) {
-      case 'image':
-        if (ext == 'png') return 'image/png';
-        if (ext == 'jpg' || ext == 'jpeg') return 'image/jpeg';
-        return 'image/*';
-      case 'video':
-        if (ext == 'mov') return 'video/quicktime';
-        if (ext == 'webm') return 'video/webm';
-        return 'video/mp4';
-      case 'audio':
-        if (ext == 'mp3') return 'audio/mpeg';
-        if (ext == 'wav') return 'audio/wav';
-        return 'audio/mp4';
-      default:
-        return 'application/octet-stream';
-    }
   }
 
   @override
@@ -146,40 +83,27 @@ class _ChatPageState extends State<ChatPage> {
     _messageController.removeListener(_handleTextChanged);
     _messageController.dispose();
     _scrollController.dispose();
-    _messageSub?.cancel();
     _recorder.dispose();
     super.dispose();
   }
 
-  void scrollDown() {
+  void _scrollDown() {
+    if (!_scrollController.hasClients) return;
+
+    final target = _scrollController.position.maxScrollExtent;
+    if (target == 0.0) return;
+
     _scrollController.animateTo(
-      _scrollController.position.maxScrollExtent,
-      duration: const Duration(seconds: 1),
-      curve: Curves.fastOutSlowIn,
+      target,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
     );
   }
 
-  // send message
-  void sendMessage() async {
-    // if there is something inside the textfield
-    if (_messageController.text.isNotEmpty) {
-      // send the message
-      await _chatService.sendMessage(
-        widget.receiverID,
-        _messageController.text,
-      );
-      // clear text controller
-      _messageController.clear();
-    }
-
-    scrollDown();
-  }
-
-  void _showSnack(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+  void _handleTextChanged() {
+    final hasText = _messageController.text.trim().isNotEmpty;
+    if (hasText == _hasText) return;
+    setState(() => _hasText = hasText);
   }
 
   Future<void> _sendMediaFile({
@@ -190,13 +114,11 @@ class _ChatPageState extends State<ChatPage> {
 
     final fileName = file.name.isNotEmpty
         ? file.name
-        : _mediaFallbackName(type);
+        : 'file_${DateTime.now().millisecondsSinceEpoch}';
+
     final contentType = _guessContentType(type, fileName);
 
-    setState(() {
-      _isUploadingMedia = true;
-    });
-
+    setState(() => _isUploadingMedia = true);
     _showSnack('Загрузка...');
 
     try {
@@ -212,10 +134,22 @@ class _ChatPageState extends State<ChatPage> {
     } catch (_) {
       _showSnack('Не удалось отправить файл');
     } finally {
-      if (!mounted) return;
-      setState(() {
-        _isUploadingMedia = false;
-      });
+      if (mounted) setState(() => _isUploadingMedia = false);
+    }
+  }
+
+  String _guessContentType(String type, String fileName) {
+    final ext = fileName.toLowerCase().split('.').last;
+
+    switch (type) {
+      case 'image':
+        return ext == 'png' ? 'image/png' : 'image/jpeg';
+      case 'video':
+        return ext == 'mov' ? 'video/quicktime' : 'video/mp4';
+      case 'audio':
+        return ext == 'wav' ? 'audio/wav' : 'audio/mp4';
+      default:
+        return 'application/octet-stream';
     }
   }
 
@@ -228,9 +162,7 @@ class _ChatPageState extends State<ChatPage> {
 
     final uri = Uri(scheme: 'tel', path: phone);
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!launched) {
-      _showSnack('Не удалось открыть набор номера');
-    }
+    if (!launched) _showSnack('Не удалось открыть набор номера');
   }
 
   Future<void> _handlePickMedia() async {
@@ -240,44 +172,42 @@ class _ChatPageState extends State<ChatPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.image),
-                title: const Text('Фото'),
-                onTap: () => Navigator.of(context).pop(_MediaPickType.image),
-              ),
-              ListTile(
-                leading: const Icon(Icons.videocam),
-                title: const Text('Видео'),
-                onTap: () => Navigator.of(context).pop(_MediaPickType.video),
-              ),
-            ],
-          ),
-        );
-      },
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.image),
+              title: const Text('Фото'),
+              onTap: () => Navigator.pop(context, _MediaPickType.image),
+            ),
+            ListTile(
+              leading: const Icon(Icons.videocam),
+              title: const Text('Видео'),
+              onTap: () => Navigator.pop(context, _MediaPickType.video),
+            ),
+          ],
+        ),
+      ),
     );
 
     if (pickedType == null) return;
 
-    XFile? file;
-    if (pickedType == _MediaPickType.image) {
-      file = await _imagePicker.pickImage(source: ImageSource.gallery);
-    } else {
-      file = await _imagePicker.pickVideo(source: ImageSource.gallery);
-    }
+    final file = pickedType == _MediaPickType.image
+        ? await _imagePicker.pickImage(source: ImageSource.gallery)
+        : await _imagePicker.pickVideo(source: ImageSource.gallery);
 
     if (file == null) return;
-    final mediaType = pickedType == _MediaPickType.image ? 'image' : 'video';
-    await _sendMediaFile(file: file, type: mediaType);
+
+    await _sendMediaFile(
+      file: file,
+      type: pickedType == _MediaPickType.image ? 'image' : 'video',
+    );
   }
 
   Future<void> _handleVoiceTap() async {
     if (_hasText) {
-      sendMessage();
+      _sendTextMessage();
       return;
     }
 
@@ -298,16 +228,12 @@ class _ChatPageState extends State<ChatPage> {
       );
 
       if (!mounted) return;
-      setState(() {
-        _isRecording = true;
-      });
+      setState(() => _isRecording = true);
       _showSnack('Запись началась');
     } else {
       final path = await _recorder.stop();
       if (!mounted) return;
-      setState(() {
-        _isRecording = false;
-      });
+      setState(() => _isRecording = false);
 
       if (path == null) {
         _showSnack('Не удалось сохранить запись');
@@ -318,6 +244,23 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
+  void _sendTextMessage() async {
+    if (_messageController.text.isEmpty) return;
+
+    await _chatService.sendMessage(widget.receiverID, _messageController.text);
+
+    _messageController.clear();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollDown());
+  }
+
+  void _showSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -326,11 +269,9 @@ class _ChatPageState extends State<ChatPage> {
         child: Column(
           children: [
             _buildPreamble(context),
-            SvgPicture.asset(
-              'assets/svg/line_in_chat_room.svg',
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
+
+            SizedBox(width: double.infinity, child: SvgIcons.lineInChat),
+
             Expanded(
               child: Container(
                 decoration: const BoxDecoration(
@@ -342,6 +283,7 @@ class _ChatPageState extends State<ChatPage> {
                 child: _buildMessageList(),
               ),
             ),
+
             _buildUserInput(),
           ],
         ),
@@ -358,12 +300,8 @@ class _ChatPageState extends State<ChatPage> {
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: SvgPicture.asset(
-              'assets/svg/back_button.svg',
-              width: 24,
-              height: 24,
-            ),
+            onTap: () => Navigator.pop(context),
+            child: SvgIcons.backButton,
           ),
           const SizedBox(width: 12),
           UserAvatar(
@@ -384,79 +322,80 @@ class _ChatPageState extends State<ChatPage> {
               ),
             ),
           ),
-          GestureDetector(
-            onTap: _handleCallTap,
-            child: SvgPicture.asset(
-              'assets/svg/call_button.svg',
-              width: 24,
-              height: 24,
-            ),
-          ),
+          GestureDetector(onTap: _handleCallTap, child: SvgIcons.callButton),
         ],
       ),
     );
   }
 
-  // build message list
   Widget _buildMessageList() {
-    return StreamBuilder(
+    // 🔥 Firestore ещё не подключён → показываем лёгкий лоадер
+    if (_messageStream == null) {
+      return const Center(
+        child: SizedBox(
+          width: 32,
+          height: 32,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+
+    return StreamBuilder<QuerySnapshot>(
       stream: _messageStream,
       builder: (context, snapshot) {
-        // errors
-        if (snapshot.hasError) {
-          return const Text("Error");
+        if (snapshot.hasError) return const Center(child: Text("Ошибка"));
+        if (!snapshot.hasData) {
+          return const Center(
+            child: SizedBox(
+              width: 32,
+              height: 32,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          );
         }
 
-        // loading
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Text("Loading…");
+        final docs = snapshot.data!.docs;
+
+        // помечаем непрочитанные как прочитанные
+        final unreadDocs = docs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return data['receiverID'] == _currentUserId && data['readed'] != true;
+        }).toList();
+
+        if (unreadDocs.isNotEmpty) {
+          _chatService.markMessagesAsRead(unreadDocs);
         }
 
-        // return list view
-        return ListView(
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollDown());
+
+        if (docs.isEmpty) return const SizedBox();
+
+        return ListView.builder(
           controller: _scrollController,
           padding: const EdgeInsets.symmetric(vertical: 12),
-          children: snapshot.data!.docs
-              .map((doc) => _buildMessageItem(doc))
-              .toList(),
-        ); // ListView
+          itemCount: docs.length,
+          itemBuilder: (context, index) => _buildMessageItem(docs[index]),
+        );
       },
-    ); // StreamBuilder
+    );
   }
 
-  // build message item
   Widget _buildMessageItem(DocumentSnapshot doc) {
-    Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-
-    // is current user
-    bool isCurrentUser = data['senderID'] == _currentUserId;
-
-    // align message to the right if sender is the current user, otherwise left
-    var alignment = isCurrentUser
-        ? Alignment.centerRight
-        : Alignment.centerLeft;
+    final data = doc.data() as Map<String, dynamic>;
+    final isCurrentUser = data['senderID'] == _currentUserId;
 
     return Container(
-      alignment: alignment,
-      child: Column(
-        crossAxisAlignment: isCurrentUser
-            ? CrossAxisAlignment.end
-            : CrossAxisAlignment.start,
-
-        children: [
-          ChatBubble(
-            message: data["message"] ?? '',
-            isCurrentUser: isCurrentUser,
-            type: data["type"] ?? 'text',
-            mediaUrl: data["mediaUrl"],
-            mediaName: data["mediaName"],
-          ),
-        ],
+      alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
+      child: ChatBubble(
+        message: data["message"] ?? '',
+        isCurrentUser: isCurrentUser,
+        type: data["type"] ?? 'text',
+        mediaUrl: data["mediaUrl"],
+        mediaName: data["mediaName"],
       ),
     );
   }
 
-  // build message input
   Widget _buildUserInput() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
