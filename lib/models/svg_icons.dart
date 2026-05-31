@@ -5,7 +5,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 class SvgIcons {
   static final Map<String, Widget> _cache = {};
 
-  /// Загружает SVG → чистит → кэширует → возвращает готовый Widget
   static Widget _load(
     String path, {
     double? width,
@@ -47,7 +46,7 @@ class SvgIcons {
     return widget;
   }
 
-  // ---------------- ICONS ----------------
+  // ---------------- EXISTING ICONS ----------------
 
   static final readTrue = _load(
     'assets/svg/ReadTrue.svg',
@@ -80,5 +79,26 @@ class SvgIcons {
   static final lineInChat = _load(
     'assets/svg/line_in_chat_room.svg',
     width: double.infinity,
+  );
+
+  // ---------------- NEW ICONS FOR HOMEPAGE ----------------
+
+  static final menuButton = _load(
+    'assets/svg/Menu_Button.svg',
+    width: 24,
+    height: 24,
+  );
+
+  static final searchButton = _load(
+    'assets/svg/Search.svg',
+    width: 24,
+    height: 24,
+  );
+
+  static final lineHome = _load(
+    'assets/svg/Line.svg',
+    width: double.infinity,
+    height: 2,
+    fit: BoxFit.cover,
   );
 }

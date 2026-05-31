@@ -13,6 +13,8 @@ import 'package:mox_beta/components/user_avatar.dart';
 import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:mox_beta/services/chat/chat_service.dart';
 
+import 'package:mox_beta/pages/home_page.dart';
+
 enum _MediaPickType { image, video }
 
 class ChatPage extends StatefulWidget {
@@ -46,11 +48,34 @@ class _ChatPageState extends State<ChatPage> {
 
   late final String _currentUserId;
 
-  Stream<QuerySnapshot>? _messageStream; // <--- теперь nullable
+  Stream<QuerySnapshot>? _messageStream;
 
   bool _hasText = false;
   bool _isRecording = false;
   bool _isUploadingMedia = false;
+  bool _mounted = true;
+  bool _isInitialLoad = true;
+
+  void _goBackToHome(BuildContext context) {
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const HomePage(),
+        transitionDuration: const Duration(milliseconds: 180),
+        reverseTransitionDuration: const Duration(milliseconds: 180),
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.96, end: 1.0).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+              ),
+              child: child,
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -62,12 +87,12 @@ class _ChatPageState extends State<ChatPage> {
 
     myFocusNode.addListener(() {
       if (myFocusNode.hasFocus) {
-        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollDown());
+        _safeScroll(force: true);
       }
     });
 
-    // 🔥 Подключаем Firestore ТОЛЬКО после первого кадра
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_mounted) return;
       setState(() {
         _messageStream = _chatService.getMessages(
           widget.receiverID,
@@ -79,6 +104,7 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   void dispose() {
+    _mounted = false;
     myFocusNode.dispose();
     _messageController.removeListener(_handleTextChanged);
     _messageController.dispose();
@@ -87,22 +113,36 @@ class _ChatPageState extends State<ChatPage> {
     super.dispose();
   }
 
-  void _scrollDown() {
+  void _safeScroll({bool force = false}) {
+    if (!_mounted) return;
     if (!_scrollController.hasClients) return;
 
-    final target = _scrollController.position.maxScrollExtent;
-    if (target == 0.0) return;
+    Future.microtask(() {
+      if (!_mounted) return;
+      if (!_scrollController.hasClients) return;
 
-    _scrollController.animateTo(
-      target,
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOut,
-    );
+      final position = _scrollController.position;
+      final max = position.maxScrollExtent;
+      if (max == 0.0) return;
+
+      if (!force && !_isInitialLoad) {
+        final distanceFromBottom = max - position.pixels;
+        if (distanceFromBottom > 200) return;
+      }
+
+      _scrollController.animateTo(
+        max,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   void _handleTextChanged() {
     final hasText = _messageController.text.trim().isNotEmpty;
     if (hasText == _hasText) return;
+    if (!_mounted) return;
+
     setState(() => _hasText = hasText);
   }
 
@@ -110,7 +150,7 @@ class _ChatPageState extends State<ChatPage> {
     required XFile file,
     required String type,
   }) async {
-    if (_isUploadingMedia) return;
+    if (_isUploadingMedia || !_mounted) return;
 
     final fileName = file.name.isNotEmpty
         ? file.name
@@ -131,10 +171,13 @@ class _ChatPageState extends State<ChatPage> {
         contentType: contentType,
       );
       _showSnack('Отправлено');
+      _safeScroll(force: true);
     } catch (_) {
       _showSnack('Не удалось отправить файл');
     } finally {
-      if (mounted) setState(() => _isUploadingMedia = false);
+      if (_mounted) {
+        setState(() => _isUploadingMedia = false);
+      }
     }
   }
 
@@ -227,12 +270,12 @@ class _ChatPageState extends State<ChatPage> {
         path: path,
       );
 
-      if (!mounted) return;
+      if (!_mounted) return;
       setState(() => _isRecording = true);
       _showSnack('Запись началась');
     } else {
       final path = await _recorder.stop();
-      if (!mounted) return;
+      if (!_mounted) return;
       setState(() => _isRecording = false);
 
       if (path == null) {
@@ -251,11 +294,11 @@ class _ChatPageState extends State<ChatPage> {
 
     _messageController.clear();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollDown());
+    _safeScroll(force: true);
   }
 
   void _showSnack(String message) {
-    if (!mounted) return;
+    if (!_mounted) return;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
@@ -263,29 +306,34 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildPreamble(context),
-
-            SizedBox(width: double.infinity, child: SvgIcons.lineInChat),
-
-            Expanded(
-              child: Container(
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage('assets/svg/background_chat_page.png'),
-                    fit: BoxFit.cover,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          _goBackToHome(context);
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: SafeArea(
+          child: Column(
+            children: [
+              RepaintBoundary(child: _buildPreamble(context)),
+              SizedBox(width: double.infinity, child: SvgIcons.lineInChat),
+              Expanded(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/svg/background_chat_page.png'),
+                      fit: BoxFit.cover,
+                    ),
                   ),
+                  child: _buildMessageList(),
                 ),
-                child: _buildMessageList(),
               ),
-            ),
-
-            _buildUserInput(),
-          ],
+              RepaintBoundary(child: _buildUserInput()),
+            ],
+          ),
         ),
       ),
     );
@@ -300,7 +348,7 @@ class _ChatPageState extends State<ChatPage> {
       child: Row(
         children: [
           GestureDetector(
-            onTap: () => Navigator.pop(context),
+            onTap: () => _goBackToHome(context),
             child: SvgIcons.backButton,
           ),
           const SizedBox(width: 12),
@@ -329,7 +377,6 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildMessageList() {
-    // 🔥 Firestore ещё не подключён → показываем лёгкий лоадер
     if (_messageStream == null) {
       return const Center(
         child: SizedBox(
@@ -343,7 +390,9 @@ class _ChatPageState extends State<ChatPage> {
     return StreamBuilder<QuerySnapshot>(
       stream: _messageStream,
       builder: (context, snapshot) {
-        if (snapshot.hasError) return const Center(child: Text("Ошибка"));
+        if (snapshot.hasError) {
+          return const Center(child: Text("Ошибка"));
+        }
         if (!snapshot.hasData) {
           return const Center(
             child: SizedBox(
@@ -356,7 +405,11 @@ class _ChatPageState extends State<ChatPage> {
 
         final docs = snapshot.data!.docs;
 
-        // помечаем непрочитанные как прочитанные
+        if (docs.isEmpty) {
+          _isInitialLoad = false;
+          return const SizedBox();
+        }
+
         final unreadDocs = docs.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
           return data['receiverID'] == _currentUserId && data['readed'] != true;
@@ -366,9 +419,10 @@ class _ChatPageState extends State<ChatPage> {
           _chatService.markMessagesAsRead(unreadDocs);
         }
 
-        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollDown());
-
-        if (docs.isEmpty) return const SizedBox();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _safeScroll(force: _isInitialLoad);
+          _isInitialLoad = false;
+        });
 
         return ListView.builder(
           controller: _scrollController,
@@ -384,25 +438,29 @@ class _ChatPageState extends State<ChatPage> {
     final data = doc.data() as Map<String, dynamic>;
     final isCurrentUser = data['senderID'] == _currentUserId;
 
-    return Container(
-      alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: ChatBubble(
-        message: data["message"] ?? '',
-        isCurrentUser: isCurrentUser,
-        type: data["type"] ?? 'text',
-        mediaUrl: data["mediaUrl"],
-        mediaName: data["mediaName"],
+    return RepaintBoundary(
+      child: Container(
+        alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
+        child: ChatBubble(
+          message: data["message"] ?? '',
+          isCurrentUser: isCurrentUser,
+          type: data["type"] ?? 'text',
+          mediaUrl: data["mediaUrl"],
+          mediaName: data["mediaName"],
+        ),
       ),
     );
   }
 
   Widget _buildUserInput() {
+    final theme = Theme.of(context);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.tertiary,
+          color: theme.colorScheme.tertiary,
           borderRadius: BorderRadius.circular(28),
         ),
         child: Row(
@@ -419,15 +477,11 @@ class _ChatPageState extends State<ChatPage> {
                 focusNode: myFocusNode,
                 decoration: InputDecoration(
                   hintText: 'Сообщение',
-                  hintStyle: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                  ),
+                  hintStyle: TextStyle(color: theme.colorScheme.onPrimary),
                   border: InputBorder.none,
                   isCollapsed: true,
                 ),
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.inversePrimary,
-                ),
+                style: TextStyle(color: theme.colorScheme.inversePrimary),
               ),
             ),
             const SizedBox(width: 10),

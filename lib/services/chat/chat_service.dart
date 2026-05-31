@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,52 +7,137 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:mox_beta/models/message.dart';
 
 class ChatService {
-  // get instanse of firestore & auth
+  // firestore, auth, storage
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
+
+  final Map<String, Map<String, dynamic>> _chatCache = {};
+  final StreamController<List<Map<String, dynamic>>> _chatController =
+      StreamController<List<Map<String, dynamic>>>.broadcast();
+
+  // подписки
+  StreamSubscription<List<Map<String, dynamic>>>? _usersSub;
+  final Map<String, StreamSubscription<Map<String, dynamic>?>> _lastSubs = {};
+  final Map<String, StreamSubscription<int>> _unreadSubs = {};
+
+  Stream<List<Map<String, dynamic>>> get chatStream => _chatController.stream;
 
   String _chatRoomId(String uid1, String uid2) {
     final ids = [uid1, uid2]..sort();
     return ids.join('_');
   }
 
-  // get user stream
-  /*
-  List<Map<String,dynamic> =
-  [
-  {
-  'email': test@gmail.com ,
-  'id': …
-  }.
-  {
-  'email': mitch@gmail.com ,
-  'id':
-  },
-  ]
-  */
   Stream<List<Map<String, dynamic>>> getUsersStream() {
     return _firestore.collection("Users").snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
-        // go through each individual user
         final user = doc.data();
-
-        // return user
         return user;
       }).toList();
     });
   }
-  // get user stream
 
-  // send message
+  Future<void> initChatCache(String currentUid) async {
+    // отменяем старую подписку, если была
+    await _usersSub?.cancel();
+    for (final sub in _lastSubs.values) {
+      await sub.cancel();
+    }
+    for (final sub in _unreadSubs.values) {
+      await sub.cancel();
+    }
+    _lastSubs.clear();
+    _unreadSubs.clear();
+    _chatCache.clear();
+    _emitCache();
+
+    _usersSub = getUsersStream().listen((users) {
+      for (final user in users) {
+        final otherUid = user["uid"];
+        if (otherUid == null || otherUid == currentUid) continue;
+
+        // отменяем старые подписки на этого юзера
+        _lastSubs[otherUid]?.cancel();
+        _unreadSubs[otherUid]?.cancel();
+
+        // слушаем последний месседж
+        _lastSubs[otherUid] = getLastMessage(currentUid, otherUid).listen((
+          last,
+        ) async {
+          if (last == null) {
+            _chatCache.remove(otherUid);
+            _emitCache();
+            return;
+          }
+
+          final unread = await getUnreadCount(currentUid, otherUid).first;
+
+          final timestamp = last["timestamp"] as Timestamp?;
+          final isSenderCurrent = last["senderID"] == currentUid;
+          final readed = isSenderCurrent ? (last["readed"] ?? false) : true;
+
+          _chatCache[otherUid] = {
+            "uid": otherUid,
+            "email": user["email"],
+            "nickname": user["nickname"],
+            "phone": user["phone"],
+            "isOnline": user["isOnline"] ?? false,
+            "lastMessage": last["message"] ?? "",
+            "type": last["type"] ?? "text",
+            "timestamp": timestamp,
+            "unreadCount": unread,
+            "readed": readed,
+          };
+
+          _emitCache();
+        });
+
+        // слушаем непрочитанные
+        _unreadSubs[otherUid] = getUnreadCount(currentUid, otherUid).listen((
+          unread,
+        ) {
+          if (_chatCache.containsKey(otherUid)) {
+            _chatCache[otherUid]!["unreadCount"] = unread;
+            _emitCache();
+          }
+        });
+      }
+    });
+  }
+
+  void _emitCache() {
+    final list = _chatCache.values.toList();
+    list.sort((a, b) {
+      final ta = a["timestamp"] as Timestamp?;
+      final tb = b["timestamp"] as Timestamp?;
+      if (ta == null && tb == null) return 0;
+      if (ta == null) return 1;
+      if (tb == null) return -1;
+      return tb.compareTo(ta);
+    });
+    _chatController.add(list);
+  }
+
+  Future<void> disposeCache() async {
+    await _usersSub?.cancel();
+    for (final sub in _lastSubs.values) {
+      await sub.cancel();
+    }
+    for (final sub in _unreadSubs.values) {
+      await sub.cancel();
+    }
+    _lastSubs.clear();
+    _unreadSubs.clear();
+    _chatCache.clear();
+  }
+
+  // send text
   Future<void> sendMessage(String receiverID, String message) async {
-    // get current user info
     final String currentUserID = _auth.currentUser!.uid;
     final String currentUserEmail = _auth.currentUser!.email!;
     final Timestamp timestamp = Timestamp.now();
 
-    // create a new message
-    Message newMessage = Message(
+    final newMessage = Message(
       senderID: currentUserID,
       senderEmail: currentUserEmail,
       receiverID: receiverID,
@@ -61,10 +147,8 @@ class ChatService {
       readed: false,
     );
 
-    // construct chat room ID for the two users (sorted to ensure uniqueness)
-    String chatRoomID = _chatRoomId(currentUserID, receiverID);
+    final chatRoomID = _chatRoomId(currentUserID, receiverID);
 
-    // add new message to database
     await _firestore
         .collection("chat_rooms")
         .doc(chatRoomID)
@@ -131,10 +215,9 @@ class ChatService {
         .add(newMessage.toMap());
   }
 
-  // get messages
+  // messages
   Stream<QuerySnapshot> getMessages(String userID, otherUserID) {
-    // construct a chatroom ID for the two users
-    String chatRoomID = _chatRoomId(userID, otherUserID);
+    final chatRoomID = _chatRoomId(userID, otherUserID);
 
     return _firestore
         .collection("chat_rooms")
@@ -145,8 +228,7 @@ class ChatService {
   }
 
   Stream<Map<String, dynamic>?> getLastMessage(String uid1, String uid2) {
-    // создаём chatRoomID так же, как в sendMessage
-    String chatRoomID = _chatRoomId(uid1, uid2);
+    final chatRoomID = _chatRoomId(uid1, uid2);
 
     return _firestore
         .collection("chat_rooms")

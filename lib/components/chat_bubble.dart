@@ -21,37 +21,34 @@ class ChatBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    final bubbleColor = isCurrentUser
+    final Color bubbleColor = isCurrentUser
         ? Colors.green.shade600
         : theme.colorScheme.tertiary;
-    final contentColor = isCurrentUser
+    final Color contentColor = isCurrentUser
         ? Colors.white
         : (isDarkMode ? Colors.white : Colors.black);
 
-    final content = _buildContent(context, isDarkMode, contentColor);
-    final padding = type == 'image'
+    final EdgeInsets padding = type == 'image'
         ? const EdgeInsets.all(6)
         : const EdgeInsets.all(16);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: bubbleColor,
-        borderRadius: BorderRadius.circular(12),
-      ), // BoxDecoration
-      padding: padding,
-      margin: const EdgeInsets.symmetric(vertical: 2.5, horizontal: 25),
-      child: content,
-    ); // Container
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
+          color: bubbleColor,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        padding: padding,
+        margin: const EdgeInsets.symmetric(vertical: 2.5, horizontal: 25),
+        child: _buildContent(context, contentColor),
+      ),
+    );
   }
 
-  Widget _buildContent(
-    BuildContext context,
-    bool isDarkMode,
-    Color contentColor,
-  ) {
+  Widget _buildContent(BuildContext context, Color contentColor) {
     switch (type) {
       case 'image':
-        return _buildImage();
+        return _buildImage(contentColor);
       case 'video':
         return _buildMediaTile(
           context,
@@ -73,9 +70,12 @@ class ChatBubble extends StatelessWidget {
     }
   }
 
-  Widget _buildImage() {
+  Widget _buildImage(Color contentColor) {
     if (mediaUrl == null || mediaUrl!.isEmpty) {
-      return const Text('Изображение недоступно');
+      return Text(
+        'Изображение недоступно',
+        style: TextStyle(color: contentColor),
+      );
     }
 
     return ClipRRect(
@@ -85,6 +85,36 @@ class ChatBubble extends StatelessWidget {
         width: 220,
         height: 220,
         fit: BoxFit.cover,
+        gaplessPlayback: true,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: 220,
+            height: 220,
+            color: Colors.black12,
+            alignment: Alignment.center,
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                          (loadingProgress.expectedTotalBytes ?? 1)
+                    : null,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: 220,
+            height: 220,
+            color: Colors.black12,
+            alignment: Alignment.center,
+            child: Icon(Icons.broken_image, color: contentColor),
+          );
+        },
       ),
     );
   }

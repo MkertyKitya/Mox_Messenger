@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:mox_beta/models/svg_icons.dart';
 
-class UserTile extends StatelessWidget {
+class UserTile extends StatefulWidget {
   final String name;
   final String lastMessage;
   final String time;
@@ -23,68 +22,71 @@ class UserTile extends StatelessWidget {
   });
 
   @override
+  State<UserTile> createState() => _UserTileState();
+}
+
+class _UserTileState extends State<UserTile>
+    with AutomaticKeepAliveClientMixin<UserTile> {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
+
+    final theme = Theme.of(context);
+    final secondaryTextColor = Colors.white.withOpacity(0.6);
+
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        constraints: const BoxConstraints(minHeight: 72),
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(color: Colors.white.withOpacity(0.06), width: 1),
           ),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start, // ← ВАЖНО!
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            avatar,
-
-            const SizedBox(width: 14),
-
-            // Левая часть: имя + сообщение
+            SizedBox(width: 48, height: 48, child: widget.avatar),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    name,
+                    widget.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-
                   const SizedBox(height: 4),
-
                   Text(
-                    lastMessage,
+                    widget.lastMessage,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white.withOpacity(0.6),
-                    ),
+                    style: TextStyle(fontSize: 14, color: secondaryTextColor),
                   ),
                 ],
               ),
             ),
-
-            const SizedBox(width: 10),
-
-            // Правая часть: иконка прочтения + время + непрочитанные
+            const SizedBox(width: 12),
             Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // Иконка прочтения + время в одной строке
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Иконка прочтения (если нет непрочитанных)
-                    if (unread == 0)
-                      (readed ? SvgIcons.readTrue : SvgIcons.readFalse),
-
-                    if (unread == 0) const SizedBox(width: 6),
-
-                    // Время в светлом прямоугольнике
+                    if (widget.unread == 0)
+                      (widget.readed ? SvgIcons.readTrue : SvgIcons.readFalse),
+                    if (widget.unread == 0) const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
@@ -95,7 +97,7 @@ class UserTile extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        time,
+                        widget.time,
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.white.withOpacity(0.7),
@@ -104,26 +106,23 @@ class UserTile extends StatelessWidget {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 6),
-
-                // Непрочитанные сообщения
-                if (unread > 0)
+                if (widget.unread > 0)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                      horizontal: 6,
+                      vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.greenAccent,
+                      color: theme.colorScheme.secondary,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      unread.toString(),
+                      widget.unread.toString(),
                       style: const TextStyle(
                         fontSize: 12,
                         color: Colors.black,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
