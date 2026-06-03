@@ -48,7 +48,7 @@ class UserAvatar extends StatelessWidget {
           height: size,
           fit: BoxFit.cover,
           gaplessPlayback: true,
-          errorBuilder: (_, __, ___) => _buildInitials(),
+          errorBuilder: (_, _, _) => _buildInitials(),
         ),
       );
     }

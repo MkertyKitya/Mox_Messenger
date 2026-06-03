@@ -1,4 +1,5 @@
 import 'package:mox_beta/services/auth/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mox_beta/components/my_button.dart';
 import 'package:mox_beta/components/my_textfield.dart';
 import 'package:flutter/material.dart';
@@ -29,11 +30,38 @@ class _LoginPageState extends State<LoginPage> {
         _emailController.text,
         _pwController.text,
       );
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      String message = 'Произошла ошибка авторизации';
+      if (e.code == 'invalid-email') {
+        message = 'Некорректный формат почты';
+      } else if (e.code == 'user-not-found')
+        message = 'Пользователь не найден';
+      else if (e.code == 'wrong-password' || e.code == 'invalid-credential')
+        message = 'Неверный пароль или почта';
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w500),
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(title: Text(e.toString())),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Неизвестная ошибка',
+            textAlign: TextAlign.center,
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
       );
     }
   }

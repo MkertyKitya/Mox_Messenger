@@ -12,6 +12,9 @@ import 'package:mox_beta/pages/chat_page.dart';
 import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:mox_beta/services/chat/chat_service.dart';
 import 'package:mox_beta/models/svg_icons.dart' as icons;
+import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
+import 'package:mox_beta/services/zego_config.dart';
+import 'package:zego_uikit_signaling_plugin/zego_uikit_signaling_plugin.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -38,6 +41,16 @@ class _HomePageState extends State<HomePage> {
     _currentUid = _authService.getCurrentUser()!.uid;
     _chatService.initChatCache(_currentUid);
     _chatStream = _chat_service_streamSafe();
+
+    ZegoUIKitPrebuiltCallInvitationService().init(
+      appID: ZegoConfig.appID,
+      appSign: ZegoConfig.appSign,
+      userID: _currentUid,
+      userName:
+          _authService.getCurrentUser()?.displayName ??
+          _authService.getCurrentUser()!.email!.split('@')[0],
+      plugins: [ZegoUIKitSignalingPlugin()],
+    );
   }
 
   // keep initState tidy and avoid long expressions inline
@@ -67,7 +80,7 @@ class _HomePageState extends State<HomePage> {
   void _openChat(Map<String, dynamic> chat) {
     Navigator.of(context).push(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => ChatPage(
+        pageBuilder: (_, _, _) => ChatPage(
           receiverEmail: chat["email"],
           receiverID: chat["uid"],
           receiverNickname: chat["nickname"],
@@ -76,7 +89,7 @@ class _HomePageState extends State<HomePage> {
         ),
         transitionDuration: const Duration(milliseconds: 180),
         reverseTransitionDuration: const Duration(milliseconds: 180),
-        transitionsBuilder: (_, animation, __, child) {
+        transitionsBuilder: (_, animation, _, child) {
           return FadeTransition(
             opacity: animation,
             child: ScaleTransition(
@@ -97,6 +110,27 @@ class _HomePageState extends State<HomePage> {
       appBar: _HomeAppBar(
         controller: _searchController,
         onChanged: _onSearchChanged,
+      ),
+      floatingActionButton: ZegoUIKitPrebuiltCallFloatingButton(
+        platformQuery: ZegoUIKitPrebuiltCallPlatformQuery.onlyEnable(
+          android: true,
+          ios: true,
+        ),
+        appID: ZegoConfig.appID,
+        appSign: ZegoConfig.appSign,
+        userID: _currentUid,
+        userName:
+            _authService.getCurrentUser()?.displayName ??
+            _authService.getCurrentUser()!.email!.split('@')[0],
+        tokenQuery: (ZegoUIKitUser zegoUser) {
+          return const Future.value("token");
+        },
+        requireConfig: (ZegoCallInvitationData data) {
+          final isGroupCall = data.invitees.length > 1;
+          return isGroupCall
+              ? ZegoCallConfig.groupVideoCall()
+              : ZegoCallConfig.oneOnOneVideoCall();
+        },
       ),
       drawer: const MyDrawer(),
       body: Column(
@@ -189,11 +223,7 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
 
-  const _HomeAppBar({
-    super.key,
-    required this.controller,
-    required this.onChanged,
-  });
+  const _HomeAppBar({required this.controller, required this.onChanged});
 
   @override
   Size get preferredSize => const Size.fromHeight(72);
@@ -205,7 +235,7 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      foregroundColor: theme.colorScheme.onBackground.withOpacity(0.7),
+      foregroundColor: theme.colorScheme.onSurface.withValues(alpha: 0.7),
       centerTitle: false,
       titleSpacing: 0,
       title: Padding(

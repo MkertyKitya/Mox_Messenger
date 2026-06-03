@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:mox_beta/components/my_button.dart';
@@ -28,10 +29,16 @@ class _RegisterPageState extends State<RegisterPage> {
 
     if (_pwController.text != _confirmPwController.text) {
       if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (context) =>
-            const AlertDialog(title: Text("Password don't match!")),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Пароли не совпадают',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.w500),
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
       );
       return;
     }
@@ -43,13 +50,40 @@ class _RegisterPageState extends State<RegisterPage> {
         _nickController.text.trim(),
       );
 
+      // Нет необходимости делать .pop() здесь, AuthGate автоматом перебросит,
+      // если только это не было модальным окном.
+    } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      Navigator.of(context).pop();
+      String message = 'Ошибка регистрации';
+      if (e.code == 'weak-password') {
+        message = 'Слишком слабый пароль';
+      } else if (e.code == 'email-already-in-use')
+        message = 'Почта уже используется';
+      else if (e.code == 'invalid-email')
+        message = 'Некорректный формат почты';
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.w500),
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(title: Text(e.toString())),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Неизвестная ошибка',
+            textAlign: TextAlign.center,
+          ),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
       );
     }
   }

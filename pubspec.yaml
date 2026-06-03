@@ -44,6 +44,8 @@ dependencies:
   path_provider: ^2.1.4
   record: ^6.2.1
   url_launcher: ^6.3.0
+  zego_uikit_prebuilt_call: ^4.24.2
+  zego_uikit_signaling_plugin: ^2.8.21
 
 dev_dependencies:
   flutter_test:

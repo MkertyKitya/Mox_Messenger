@@ -3,7 +3,6 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mox_beta/models/svg_icons.dart' as icons;
 import 'package:path_provider/path_provider.dart';
@@ -268,43 +267,46 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Future<void> _handleVoiceTap() async {
+  Future<void> _startRecording() async {
     if (_hasText) {
       _sendTextMessage();
       return;
     }
 
-    if (!_isRecording) {
-      final hasPermission = await _recorder.hasPermission();
-      if (!hasPermission) {
-        _showSnack('Нет доступа к микрофону');
-        return;
-      }
-
-      final dir = await getTemporaryDirectory();
-      final path =
-          '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
-
-      await _recorder.start(
-        const RecordConfig(encoder: AudioEncoder.aacLc),
-        path: path,
-      );
-
-      if (!mounted) return;
-      setState(() => _isRecording = true);
-      _showSnack('Запись началась');
-    } else {
-      final path = await _recorder.stop();
-      if (!mounted) return;
-      setState(() => _isRecording = false);
-
-      if (path == null) {
-        _showSnack('Не удалось сохранить запись');
-        return;
-      }
-
-      await _sendMediaFile(file: XFile(path), type: 'audio');
+    final hasPermission = await _recorder.hasPermission();
+    if (!hasPermission) {
+      _showSnack('Нет доступа к микрофону');
+      return;
     }
+
+    final dir = await getTemporaryDirectory();
+    final path =
+        '${dir.path}/voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
+    await _recorder.start(
+      const RecordConfig(encoder: AudioEncoder.aacLc),
+      path: path,
+    );
+
+    if (!mounted) return;
+    setState(() => _isRecording = true);
+    _showSnack('Запись... (отпустите для отправки)');
+  }
+
+  Future<void> _stopRecording() async {
+    if (!_isRecording) return;
+
+    final path = await _recorder.stop();
+    if (!mounted) return;
+    setState(() => _isRecording = false);
+    ScaffoldMessenger.of(context).clearSnackBars(); // убрать snackbar Запись...
+
+    if (path == null) {
+      _showSnack('Запись отменена');
+      return;
+    }
+
+    await _sendMediaFile(file: XFile(path), type: 'audio');
   }
 
   void _sendTextMessage() async {
@@ -319,18 +321,32 @@ class _ChatPageState extends State<ChatPage> {
 
   void _showSnack(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+          textAlign: TextAlign.center,
+        ),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Theme.of(
+          context,
+        ).colorScheme.inversePrimary.withAlpha(220),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        margin: const EdgeInsets.only(bottom: 80, left: 32, right: 32),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   void _goBackToHome(BuildContext context) {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const HomePage(),
+        pageBuilder: (_, _, _) => const HomePage(),
         transitionDuration: const Duration(milliseconds: 180),
         reverseTransitionDuration: const Duration(milliseconds: 180),
-        transitionsBuilder: (_, animation, __, child) {
+        transitionsBuilder: (_, animation, _, child) {
           return FadeTransition(
             opacity: animation,
             child: ScaleTransition(
@@ -348,15 +364,17 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     // Main layout: keep build light and avoid heavy operations here.
-    return WillPopScope(
-      onWillPop: () async {
-        // If you want custom pop handling, return false and handle navigation manually.
+    return PopScope(
+      canPop: false,
+      onPopInvoked: (didPop) async {
+        if (didPop) return;
         _goBackToHome(context);
-        return false;
       },
       child: Scaffold(
+        resizeToAvoidBottomInset: true,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: SafeArea(
+          bottom: false,
           child: Column(
             children: [
               RepaintBoundary(child: _buildPreamble(context)),
@@ -606,8 +624,14 @@ class _ChatPageState extends State<ChatPage> {
             ),
             const SizedBox(width: 10),
             GestureDetector(
-              onTap: _handleVoiceTap,
-              child: SizedBox(width: 24, height: 24, child: sendIconSwitcher),
+              onTap: _hasText ? _sendTextMessage : null,
+              onLongPress: _hasText ? null : _startRecording,
+              onLongPressUp: _hasText ? null : _stopRecording,
+              child: AnimatedScale(
+                scale: _isRecording ? 1.4 : 1.0,
+                duration: const Duration(milliseconds: 200),
+                child: SizedBox(width: 24, height: 24, child: sendIconSwitcher),
+              ),
             ),
           ],
         ),

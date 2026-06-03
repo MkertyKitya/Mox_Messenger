@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mox_beta/models/svg_icons.dart' as icons;
+import 'package:flutter_svg/flutter_svg.dart';
 
-class UserTile extends StatefulWidget {
+class UserTile extends StatelessWidget {
   final String name;
   final String lastMessage;
   final String time;
@@ -22,115 +22,120 @@ class UserTile extends StatefulWidget {
   });
 
   @override
-  State<UserTile> createState() => _UserTileState();
-}
-
-class _UserTileState extends State<UserTile>
-    with AutomaticKeepAliveClientMixin<UserTile> {
-  @override
-  bool get wantKeepAlive => true;
-
-  @override
   Widget build(BuildContext context) {
-    super.build(context);
-
-    final theme = Theme.of(context);
-    final secondaryTextColor = Colors.white.withOpacity(0.6);
-
     return GestureDetector(
-      onTap: widget.onTap,
+      onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        constraints: const BoxConstraints(minHeight: 72),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
           border: Border(
-            bottom: BorderSide(color: Colors.white.withOpacity(0.06), width: 1),
+            bottom: BorderSide(
+              color: Colors.white.withValues(alpha: 0.06),
+              width: 1,
+            ),
           ),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start, // ← ВАЖНО!
           children: [
-            // фиксированный контейнер для аватара
-            SizedBox(width: 48, height: 48, child: widget.avatar),
-            const SizedBox(width: 16),
+            avatar,
+
+            const SizedBox(width: 14),
+
+            // Левая часть: имя + сообщение
             Expanded(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    name,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+
                   const SizedBox(height: 4),
+
                   Text(
-                    widget.lastMessage,
+                    lastMessage,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 14, color: secondaryTextColor),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.white.withValues(alpha: 0.6),
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 12),
+
+            const SizedBox(width: 10),
+
+            // Правая часть: иконка прочтения + время + непрочитанные
             Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                // Иконка прочтения + время в одной строке
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (widget.unread == 0)
-                      // фиксированный контейнер для иконки прочтения
-                      SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: widget.readed
-                            ? icons.SvgIcons.readTrue
-                            : icons.SvgIcons.readFalse,
-                      ),
-                    if (widget.unread == 0) const SizedBox(width: 6),
+                    // Иконка прочтения (если нет непрочитанных)
+                    if (unread == 0)
+                      (readed
+                          ? SvgPicture.asset(
+                              'assets/svg/ReadTrue.svg',
+                              width: 16,
+                              height: 16,
+                            )
+                          : SvgPicture.asset(
+                              'assets/svg/ReadFalse.svg',
+                              width: 16,
+                              height: 16,
+                            )),
+
+                    if (unread == 0) const SizedBox(width: 6),
+
+                    // Время в светлом прямоугольнике
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.08),
+                        color: Colors.white.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        widget.time,
+                        time,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                         ),
                       ),
                     ),
                   ],
                 ),
+
                 const SizedBox(height: 6),
-                if (widget.unread > 0)
+
+                // Непрочитанные сообщения
+                if (unread > 0)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
+                      horizontal: 8,
+                      vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.green.shade600,
+                      color: Colors.greenAccent,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      widget.unread.toString(),
+                      unread.toString(),
                       style: const TextStyle(
                         fontSize: 12,
                         color: Colors.black,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
