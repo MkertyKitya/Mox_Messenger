@@ -1,15 +1,16 @@
+// lib/pages/chat_page.dart
 import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:mox_beta/models/svg_icons.dart';
+import 'package:mox_beta/models/svg_icons.dart' as icons;
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mox_beta/components/chat_bubble.dart';
-import 'package:mox_beta/components/user_avatar.dart';
+import 'package:mox_beta/components/user_avatar.dart' as ua;
 import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:mox_beta/services/chat/chat_service.dart';
 
@@ -46,6 +47,9 @@ class _ChatPageState extends State<ChatPage> {
   final FocusNode myFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
 
+  // controller for horizontal scrolling inside the TextField
+  final ScrollController _textFieldScrollController = ScrollController();
+
   late final String _currentUserId;
 
   Stream<QuerySnapshot>? _messageStream;
@@ -53,29 +57,10 @@ class _ChatPageState extends State<ChatPage> {
   bool _hasText = false;
   bool _isRecording = false;
   bool _isUploadingMedia = false;
-  bool _mounted = true;
   bool _isInitialLoad = true;
 
-  void _goBackToHome(BuildContext context) {
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const HomePage(),
-        transitionDuration: const Duration(milliseconds: 180),
-        reverseTransitionDuration: const Duration(milliseconds: 180),
-        transitionsBuilder: (_, animation, __, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: ScaleTransition(
-              scale: Tween<double>(begin: 0.96, end: 1.0).animate(
-                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-              ),
-              child: child,
-            ),
-          );
-        },
-      ),
-    );
-  }
+  // debounce for search (if needed elsewhere) - kept for pattern consistency
+  Timer? _searchDebounce;
 
   @override
   void initState() {
@@ -92,33 +77,42 @@ class _ChatPageState extends State<ChatPage> {
     });
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_mounted) return;
+      if (!mounted) return;
       setState(() {
-        _messageStream = _chatService.getMessages(
-          widget.receiverID,
-          _currentUserId,
-        );
+        _messageStream = _chatServiceGetMessagesSafe();
       });
     });
   }
 
+  // Helper to call chatService.getMessages safely (keeps initState tidy)
+  Stream<QuerySnapshot> _chatServiceGetMessagesSafe() {
+    return _chatService.getMessages(widget.receiverID, _currentUserId);
+  }
+
   @override
   void dispose() {
-    _mounted = false;
+    _searchDebounce?.cancel();
     myFocusNode.dispose();
     _messageController.removeListener(_handleTextChanged);
     _messageController.dispose();
-    _scrollController.dispose();
+    _scrollControllerSafeDispose();
+    _textFieldScrollController.dispose();
     _recorder.dispose();
     super.dispose();
   }
 
+  void _scrollControllerSafeDispose() {
+    try {
+      _scrollController.dispose();
+    } catch (_) {}
+  }
+
   void _safeScroll({bool force = false}) {
-    if (!_mounted) return;
+    if (!mounted) return;
     if (!_scrollController.hasClients) return;
 
     Future.microtask(() {
-      if (!_mounted) return;
+      if (!mounted) return;
       if (!_scrollController.hasClients) return;
 
       final position = _scrollController.position;
@@ -138,19 +132,45 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
+  // Updated: handle text changes, update _hasText and scroll the TextField to end
   void _handleTextChanged() {
     final hasText = _messageController.text.trim().isNotEmpty;
-    if (hasText == _hasText) return;
-    if (!_mounted) return;
+    if (hasText == _hasText) {
+      // Even if state didn't change, ensure the text field scrolls to show the cursor
+      _scrollTextFieldToEnd();
+      return;
+    }
+    if (!mounted) return;
 
     setState(() => _hasText = hasText);
+
+    // Scroll after rebuild so the cursor/last characters are visible
+    _scrollTextFieldToEnd();
+  }
+
+  void _scrollTextFieldToEnd() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!_textFieldScrollController.hasClients) return;
+
+      try {
+        final max = _textFieldScrollController.position.maxScrollExtent;
+        _textFieldScrollController.animateTo(
+          max,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOut,
+        );
+      } catch (_) {
+        // ignore: sometimes position may be unavailable during layout changes
+      }
+    });
   }
 
   Future<void> _sendMediaFile({
     required XFile file,
     required String type,
   }) async {
-    if (_isUploadingMedia || !_mounted) return;
+    if (_isUploadingMedia || !mounted) return;
 
     final fileName = file.name.isNotEmpty
         ? file.name
@@ -175,7 +195,7 @@ class _ChatPageState extends State<ChatPage> {
     } catch (_) {
       _showSnack('Не удалось отправить файл');
     } finally {
-      if (_mounted) {
+      if (mounted) {
         setState(() => _isUploadingMedia = false);
       }
     }
@@ -270,12 +290,12 @@ class _ChatPageState extends State<ChatPage> {
         path: path,
       );
 
-      if (!_mounted) return;
+      if (!mounted) return;
       setState(() => _isRecording = true);
       _showSnack('Запись началась');
     } else {
       final path = await _recorder.stop();
-      if (!_mounted) return;
+      if (!mounted) return;
       setState(() => _isRecording = false);
 
       if (path == null) {
@@ -298,20 +318,41 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _showSnack(String message) {
-    if (!_mounted) return;
+    if (!mounted) return;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  void _goBackToHome(BuildContext context) {
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const HomePage(),
+        transitionDuration: const Duration(milliseconds: 180),
+        reverseTransitionDuration: const Duration(milliseconds: 180),
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.96, end: 1.0).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+              ),
+              child: child,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) {
-          _goBackToHome(context);
-        }
+    // Main layout: keep build light and avoid heavy operations here.
+    return WillPopScope(
+      onWillPop: () async {
+        // If you want custom pop handling, return false and handle navigation manually.
+        _goBackToHome(context);
+        return false;
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -319,7 +360,11 @@ class _ChatPageState extends State<ChatPage> {
           child: Column(
             children: [
               RepaintBoundary(child: _buildPreamble(context)),
-              SizedBox(width: double.infinity, child: SvgIcons.lineInChat),
+              // use cached lineInChat from SvgIcons (placeholder until ready)
+              SizedBox(
+                width: double.infinity,
+                child: icons.SvgIcons.lineInChat,
+              ),
               Expanded(
                 child: Container(
                   decoration: const BoxDecoration(
@@ -349,10 +394,14 @@ class _ChatPageState extends State<ChatPage> {
         children: [
           GestureDetector(
             onTap: () => _goBackToHome(context),
-            child: SvgIcons.backButton,
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: icons.SvgIcons.backButton,
+            ),
           ),
           const SizedBox(width: 12),
-          UserAvatar(
+          ua.UserAvatar(
             nickname: widget.receiverNickname,
             size: 48,
             isOnline: widget.receiverIsOnline,
@@ -370,7 +419,14 @@ class _ChatPageState extends State<ChatPage> {
               ),
             ),
           ),
-          GestureDetector(onTap: _handleCallTap, child: SvgIcons.callButton),
+          GestureDetector(
+            onTap: _handleCallTap,
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: icons.SvgIcons.callButton,
+            ),
+          ),
         ],
       ),
     );
@@ -438,6 +494,25 @@ class _ChatPageState extends State<ChatPage> {
     final data = doc.data() as Map<String, dynamic>;
     final isCurrentUser = data['senderID'] == _currentUserId;
 
+    // Попытка получить время из разных форматов
+    DateTime? time;
+    final created = data['createdAt'];
+    if (created != null) {
+      if (created is Timestamp) {
+        time = created.toDate();
+      } else if (created is DateTime) {
+        time = created;
+      } else if (created is int) {
+        time = DateTime.fromMillisecondsSinceEpoch(created);
+      } else if (created is String) {
+        try {
+          time = DateTime.parse(created);
+        } catch (_) {
+          /* ignore */
+        }
+      }
+    }
+
     return RepaintBoundary(
       child: Container(
         alignment: isCurrentUser ? Alignment.centerRight : Alignment.centerLeft,
@@ -447,6 +522,7 @@ class _ChatPageState extends State<ChatPage> {
           type: data["type"] ?? 'text',
           mediaUrl: data["mediaUrl"],
           mediaName: data["mediaName"],
+          time: time, // <- передаём время сюда
         ),
       ),
     );
@@ -454,6 +530,44 @@ class _ChatPageState extends State<ChatPage> {
 
   Widget _buildUserInput() {
     final theme = Theme.of(context);
+
+    // Use SvgIcons.instance.iconWidget for ad-hoc icons not exposed as getters
+    final Widget emojiIcon = icons.SvgIcons.instance.iconWidget(
+      'assets/svg/send_emoji_button.svg',
+      width: 24,
+      height: 24,
+      placeholder: const SizedBox(width: 24, height: 24),
+    );
+
+    final Widget pinIcon = icons.SvgIcons.instance.iconWidget(
+      'assets/svg/pinning_content.svg',
+      width: 24,
+      height: 24,
+      placeholder: const SizedBox(width: 24, height: 24),
+    );
+
+    // AnimatedSwitcher for smooth icon swap between send and voice
+    final Widget sendIconSwitcher = AnimatedSwitcher(
+      duration: const Duration(milliseconds: 140),
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeIn,
+      transitionBuilder: (child, animation) {
+        return FadeTransition(opacity: animation, child: child);
+      },
+      child: SizedBox(
+        key: ValueKey<bool>(_hasText),
+        width: 24,
+        height: 24,
+        child: icons.SvgIcons.instance.iconWidget(
+          _hasText
+              ? 'assets/svg/send_message_button.svg'
+              : 'assets/svg/send_voice_message_button.svg',
+          width: 24,
+          height: 24,
+          placeholder: const SizedBox(width: 24, height: 24),
+        ),
+      ),
+    );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -465,16 +579,15 @@ class _ChatPageState extends State<ChatPage> {
         ),
         child: Row(
           children: [
-            SvgPicture.asset(
-              'assets/svg/send_emoji_button.svg',
-              width: 24,
-              height: 24,
-            ),
+            SizedBox(width: 24, height: 24, child: emojiIcon),
             const SizedBox(width: 10),
             Expanded(
               child: TextField(
                 controller: _messageController,
                 focusNode: myFocusNode,
+                scrollController: _textFieldScrollController,
+                maxLines: 1,
+                minLines: 1,
                 decoration: InputDecoration(
                   hintText: 'Сообщение',
                   hintStyle: TextStyle(color: theme.colorScheme.onPrimary),
@@ -482,27 +595,19 @@ class _ChatPageState extends State<ChatPage> {
                   isCollapsed: true,
                 ),
                 style: TextStyle(color: theme.colorScheme.inversePrimary),
+                textAlignVertical: TextAlignVertical.center,
+                onSubmitted: (_) => _sendTextMessage(),
               ),
             ),
             const SizedBox(width: 10),
             GestureDetector(
               onTap: _handlePickMedia,
-              child: SvgPicture.asset(
-                'assets/svg/pinning_content.svg',
-                width: 24,
-                height: 24,
-              ),
+              child: SizedBox(width: 24, height: 24, child: pinIcon),
             ),
             const SizedBox(width: 10),
             GestureDetector(
               onTap: _handleVoiceTap,
-              child: SvgPicture.asset(
-                _hasText
-                    ? 'assets/svg/send_message_button.svg'
-                    : 'assets/svg/send_voice_message_button.svg',
-                width: 24,
-                height: 24,
-              ),
+              child: SizedBox(width: 24, height: 24, child: sendIconSwitcher),
             ),
           ],
         ),

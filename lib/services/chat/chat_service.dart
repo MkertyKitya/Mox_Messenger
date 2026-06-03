@@ -64,17 +64,17 @@ class ChatService {
         _lastSubs[otherUid] = getLastMessage(currentUid, otherUid).listen((
           last,
         ) async {
-          if (last == null) {
-            _chatCache.remove(otherUid);
-            _emitCache();
-            return;
-          }
+          // if (last == null) {
+          //   _chatCache.remove(otherUid);
+          //   _emitCache();
+          //   return;
+          // }
 
           final unread = await getUnreadCount(currentUid, otherUid).first;
 
-          final timestamp = last["timestamp"] as Timestamp?;
-          final isSenderCurrent = last["senderID"] == currentUid;
-          final readed = isSenderCurrent ? (last["readed"] ?? false) : true;
+          final timestamp = last?["timestamp"] as Timestamp?;
+          final isSenderCurrent = last?["senderID"] == currentUid;
+          final readed = isSenderCurrent ? (last?["readed"] ?? false) : true;
 
           _chatCache[otherUid] = {
             "uid": otherUid,
@@ -82,8 +82,8 @@ class ChatService {
             "nickname": user["nickname"],
             "phone": user["phone"],
             "isOnline": user["isOnline"] ?? false,
-            "lastMessage": last["message"] ?? "",
-            "type": last["type"] ?? "text",
+            "lastMessage": last?["message"] ?? "",
+            "type": last?["type"] ?? "text",
             "timestamp": timestamp,
             "unreadCount": unread,
             "readed": readed,

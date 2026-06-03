@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mox_beta/models/svg_icons.dart';
+import 'package:mox_beta/models/svg_icons.dart' as icons;
 
 class UserTile extends StatefulWidget {
   final String name;
@@ -50,6 +50,7 @@ class _UserTileState extends State<UserTile>
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // фиксированный контейнер для аватара
             SizedBox(width: 48, height: 48, child: widget.avatar),
             const SizedBox(width: 16),
             Expanded(
@@ -85,7 +86,14 @@ class _UserTileState extends State<UserTile>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (widget.unread == 0)
-                      (widget.readed ? SvgIcons.readTrue : SvgIcons.readFalse),
+                      // фиксированный контейнер для иконки прочтения
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: widget.readed
+                            ? icons.SvgIcons.readTrue
+                            : icons.SvgIcons.readFalse,
+                      ),
                     if (widget.unread == 0) const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -114,7 +122,7 @@ class _UserTileState extends State<UserTile>
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.secondary,
+                      color: Colors.green.shade600,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(

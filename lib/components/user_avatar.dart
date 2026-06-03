@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mox_beta/models/svg_icons.dart';
+import 'package:mox_beta/models/svg_icons.dart' as icons;
 
 class UserAvatar extends StatelessWidget {
   final String? imageURL;
@@ -26,8 +26,11 @@ class UserAvatar extends StatelessWidget {
             left: -size * 0.05,
             top: (size - size * 0.6) / 2,
             child: SizedBox(
+              width: size * 0.6,
               height: size * 0.6,
-              child: isOnline ? SvgIcons.onlineTrue : SvgIcons.onlineFalse,
+              child: isOnline
+                  ? icons.SvgIcons.onlineTrue
+                  : icons.SvgIcons.onlineFalse,
             ),
           ),
         ],

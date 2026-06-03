@@ -1,15 +1,17 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import 'package:mox_beta/components/my_drawer.dart';
 import 'package:mox_beta/components/user_tile.dart';
-import 'package:mox_beta/components/user_avatar.dart';
+import 'package:mox_beta/components/user_avatar.dart' as ua;
 
 import 'package:mox_beta/pages/chat_page.dart';
 
 import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:mox_beta/services/chat/chat_service.dart';
-import 'package:mox_beta/models/svg_icons.dart';
+import 'package:mox_beta/models/svg_icons.dart' as icons;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,20 +23,45 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
+  Timer? _searchDebounce;
 
   late final String _currentUid;
   late final Stream<List<Map<String, dynamic>>> _chatStream;
+
+  // --- SEARCH STATE ---
+  final TextEditingController _searchController = TextEditingController();
+  String _searchTerm = '';
 
   @override
   void initState() {
     super.initState();
     _currentUid = _authService.getCurrentUser()!.uid;
     _chatService.initChatCache(_currentUid);
-    _chatStream = _chatService.chatStream;
+    _chatStream = _chat_service_streamSafe();
+  }
+
+  // keep initState tidy and avoid long expressions inline
+  Stream<List<Map<String, dynamic>>> _chat_service_streamSafe() {
+    return _chatService.chatStream;
+  }
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
   }
 
   String _formatTime(DateTime dt) {
     return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+  }
+
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      setState(() => _searchTerm = value.trim().toLowerCase());
+    });
   }
 
   void _openChat(Map<String, dynamic> chat) {
@@ -67,12 +94,18 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const _HomeAppBar(),
+      appBar: _HomeAppBar(
+        controller: _searchController,
+        onChanged: _onSearchChanged,
+      ),
       drawer: const MyDrawer(),
       body: Column(
         children: [
           RepaintBoundary(
-            child: SizedBox(width: double.infinity, child: SvgIcons.lineHome),
+            child: SizedBox(
+              width: double.infinity,
+              child: icons.SvgIcons.lineHome,
+            ),
           ),
           Expanded(child: RepaintBoundary(child: _buildChatList())),
         ],
@@ -98,7 +131,17 @@ class _HomePageState extends State<HomePage> {
           );
         }
 
-        final chats = snapshot.data!;
+        final allChats = snapshot.data!;
+
+        // --- FILTERING LOGIC ---
+        final chats = allChats.where((chat) {
+          final name = (chat["nickname"] ?? "").toString().toLowerCase();
+
+          if (_searchTerm.isEmpty) return true; // show all chats
+
+          return name.startsWith(_searchTerm); // filter by first letters
+        }).toList();
+
         if (chats.isEmpty) {
           return const Center(child: Text("Нет чатов"));
         }
@@ -128,7 +171,7 @@ class _HomePageState extends State<HomePage> {
                 time: time,
                 unread: unread,
                 readed: readed,
-                avatar: UserAvatar(
+                avatar: ua.UserAvatar(
                   nickname: name,
                   isOnline: chat["isOnline"] ?? false,
                 ),
@@ -142,78 +185,79 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class _HomeAppBar extends StatefulWidget implements PreferredSizeWidget {
-  const _HomeAppBar({super.key});
+class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+
+  const _HomeAppBar({
+    super.key,
+    required this.controller,
+    required this.onChanged,
+  });
 
   @override
   Size get preferredSize => const Size.fromHeight(72);
 
   @override
-  State<_HomeAppBar> createState() => _HomeAppBarState();
-}
-
-class _HomeAppBarState extends State<_HomeAppBar> {
-  final TextEditingController _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return RepaintBoundary(
-      child: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: theme.colorScheme.onBackground.withOpacity(0.7),
-        centerTitle: false,
-        titleSpacing: 0,
-        title: Padding(
-          padding: const EdgeInsets.only(right: 12),
-          child: Container(
-            height: 40,
-            margin: const EdgeInsets.only(left: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.tertiary,
-              borderRadius: BorderRadius.circular(50),
-            ),
-            alignment: Alignment.center,
-            child: TextField(
-              controller: _controller,
-              cursorWidth: 1.4,
-              style: const TextStyle(fontSize: 14, height: 1.2),
-              decoration: const InputDecoration(
-                hintText: 'Поиск чатов',
-                hintStyle: TextStyle(fontSize: 14),
-                border: InputBorder.none,
-                isCollapsed: true,
-              ),
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      foregroundColor: theme.colorScheme.onBackground.withOpacity(0.7),
+      centerTitle: false,
+      titleSpacing: 0,
+      title: Padding(
+        padding: const EdgeInsets.only(right: 12),
+        child: Container(
+          height: 40,
+          margin: const EdgeInsets.only(left: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.tertiary,
+            borderRadius: BorderRadius.circular(50),
+          ),
+          alignment: Alignment.center,
+          child: TextField(
+            controller: controller,
+            onChanged: onChanged,
+            cursorWidth: 1.4,
+            style: const TextStyle(fontSize: 14, height: 1.2),
+            decoration: const InputDecoration(
+              hintText: 'Поиск чатов',
+              hintStyle: TextStyle(fontSize: 14),
+              border: InputBorder.none,
+              isCollapsed: true,
             ),
           ),
         ),
-        leadingWidth: 52,
-        leading: Builder(
-          builder: (context) => IconButton(
-            iconSize: 24,
-            padding: const EdgeInsets.only(left: 8),
-            icon: SvgIcons.menuButton,
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
-        actions: [
-          IconButton(
-            iconSize: 24,
-            padding: const EdgeInsets.only(right: 8),
-            icon: SvgIcons.searchButton,
-            onPressed: () {},
-          ),
-        ],
       ),
+      leadingWidth: 52,
+      leading: Builder(
+        builder: (context) => IconButton(
+          iconSize: 24,
+          padding: const EdgeInsets.only(left: 8),
+          icon: SizedBox(
+            width: 24,
+            height: 24,
+            child: icons.SvgIcons.menuButton,
+          ),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
+      ),
+      actions: [
+        IconButton(
+          iconSize: 24,
+          padding: const EdgeInsets.only(right: 8),
+          icon: SizedBox(
+            width: 24,
+            height: 24,
+            child: icons.SvgIcons.searchButton,
+          ),
+          onPressed: () {},
+        ),
+      ],
     );
   }
 }
