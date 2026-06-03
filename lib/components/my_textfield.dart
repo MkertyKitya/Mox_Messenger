@@ -9,7 +9,12 @@ class MyTextField extends StatelessWidget {
   final Widget? prefixIcon;
   final Widget? suffixIcon;
   final Function(String)? onChanged;
+
+  /// СТАРЫЙ параметр — SVG фон (оставляем для совместимости)
   final String? backgroundSvg;
+
+  /// НОВЫЙ параметр — PNG фон (Widget)
+  final Widget? backgroundImage;
 
   const MyTextField({
     super.key,
@@ -21,9 +26,10 @@ class MyTextField extends StatelessWidget {
     this.suffixIcon,
     this.onChanged,
     this.backgroundSvg,
+    this.backgroundImage, // ← добавили
   });
 
-  //оптимизация
+  // Кэш SVG
   static final Map<String, Widget> _svgCache = {};
 
   Widget? _getCachedSvg(String? path) {
@@ -36,7 +42,7 @@ class MyTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = _getCachedSvg(backgroundSvg);
+    final bgSvg = _getCachedSvg(backgroundSvg);
 
     return Center(
       child: SizedBox(
@@ -45,8 +51,29 @@ class MyTextField extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            if (bg != null) SizedBox(width: 320, height: 70, child: bg),
+            /// 1. PNG фон (если есть)
+            if (backgroundImage != null)
+              Positioned.fill(
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  child: SizedBox(
+                    width: 320,
+                    height: 70,
+                    child: backgroundImage,
+                  ),
+                ),
+              ),
 
+            /// 2. SVG фон (если PNG нет)
+            if (backgroundImage == null && bgSvg != null)
+              Positioned.fill(
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  child: SizedBox(width: 320, height: 70, child: bgSvg),
+                ),
+              ),
+
+            /// 3. Само поле ввода
             Positioned.fill(
               child: TextField(
                 cursorColor: Theme.of(context).colorScheme.onPrimary,

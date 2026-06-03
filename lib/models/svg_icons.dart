@@ -97,4 +97,23 @@ class SvgIcons {
     fit: BoxFit.cover,
     placeholder: const SizedBox(height: 2),
   );
+
+  // ----------------- LOGIN / REGISTER PNG ICONS -----------------
+
+  static Widget get logo =>
+      instance.iconWidget('assets/images/Logo.png', width: 100, height: 100);
+
+  static Widget get loginField1 => instance.iconWidget(
+    'assets/images/Login_or_Register1.png',
+    width: double.infinity,
+    height: 60,
+    fit: BoxFit.cover,
+  );
+
+  static Widget get loginField3 => instance.iconWidget(
+    'assets/images/Login_or_Register3.png',
+    width: double.infinity,
+    height: 60,
+    fit: BoxFit.cover,
+  );
 }

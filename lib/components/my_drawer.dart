@@ -1,18 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:mox_beta/pages/setting_page.dart';
+import 'package:mox_beta/pages/login_page.dart';
 
 class MyDrawer extends StatelessWidget {
   const MyDrawer({super.key});
 
-  void logout() {
-    //get auth service
-    final auth = AuthService();
-    auth.signOut();
-  }
-
   @override
   Widget build(BuildContext context) {
+    // ЛОГИКА logout — внутри build, чтобы иметь доступ к context
+    Future<void> logout() async {
+      final auth = AuthService();
+
+      // 1. Закрываем Drawer
+      Navigator.of(context).pop();
+
+      // 2. Выходим из аккаунта
+      await auth.signOut();
+
+      if (!context.mounted) return;
+
+      // 3. Переходим на LoginPage с обязательным параметром onTap
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) => LoginPage(
+            onTap: () {
+              // переход на регистрацию (если есть RegisterPage)
+              // если нет — оставляем пустым
+            },
+          ),
+        ),
+        (route) => false,
+      );
+    }
+
     return Drawer(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
@@ -20,7 +41,6 @@ class MyDrawer extends StatelessWidget {
         children: [
           Column(
             children: [
-              // logo
               DrawerHeader(
                 child: Center(
                   child: Icon(
@@ -30,30 +50,27 @@ class MyDrawer extends StatelessWidget {
                   ),
                 ),
               ),
-              // home list tile
+
+              // HOME
               Padding(
                 padding: const EdgeInsets.only(left: 5.0),
                 child: ListTile(
                   title: const Text("H O M E"),
                   leading: const Icon(Icons.home),
                   onTap: () {
-                    //pop the drawer
                     Navigator.pop(context);
                   },
                 ),
               ),
 
-              //settings list tile
+              // SETTINGS
               Padding(
                 padding: const EdgeInsets.only(left: 5.0),
                 child: ListTile(
                   title: const Text("S E T T I N G S"),
                   leading: const Icon(Icons.settings),
                   onTap: () {
-                    //pop the drawer
                     Navigator.pop(context);
-
-                    //Navigate to settings page
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -65,7 +82,8 @@ class MyDrawer extends StatelessWidget {
               ),
             ],
           ),
-          // logout list tile
+
+          // LOGOUT
           Padding(
             padding: const EdgeInsets.only(left: 5.0, bottom: 5.0),
             child: ListTile(

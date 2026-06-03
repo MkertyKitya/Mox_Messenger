@@ -1,13 +1,12 @@
+import 'package:mox_beta/models/svg_icons.dart' as icons;
 import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mox_beta/components/my_button.dart';
 import 'package:mox_beta/components/my_textfield.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/gestures.dart';
 
 class LoginPage extends StatefulWidget {
-  // tap to go to register page
   final void Function()? onTap;
 
   const LoginPage({super.key, required this.onTap});
@@ -17,11 +16,9 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  // email and passwd text controller
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _pwController = TextEditingController();
 
-  // login method
   Future<void> login() async {
     final authService = AuthService();
 
@@ -32,13 +29,15 @@ class _LoginPageState extends State<LoginPage> {
       );
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
+
       String message = 'Произошла ошибка авторизации';
       if (e.code == 'invalid-email') {
         message = 'Некорректный формат почты';
-      } else if (e.code == 'user-not-found')
+      } else if (e.code == 'user-not-found') {
         message = 'Пользователь не найден';
-      else if (e.code == 'wrong-password' || e.code == 'invalid-credential')
+      } else if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
         message = 'Неверный пароль или почта';
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -51,8 +50,9 @@ class _LoginPageState extends State<LoginPage> {
           backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
-    } catch (e) {
+    } catch (_) {
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text(
@@ -76,65 +76,55 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // logo
-                SvgPicture.asset(
-                  'assets/svg/Logo.svg',
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.contain,
-                ),
-
-                const SizedBox(height: 50),
-
-                // welcome back message
-                Text(
-                  "Welcome back!",
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.inversePrimary,
-                    fontSize: 20,
+          // Прокручиваемая часть
+          SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 120),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 80),
+                  SizedBox(width: 200, height: 200, child: icons.SvgIcons.logo),
+                  const SizedBox(height: 50),
+                  Text(
+                    "Welcome back!",
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.inversePrimary,
+                      fontSize: 20,
+                    ),
                   ),
-                ),
-
-                const SizedBox(height: 25),
-
-                // email textfield
-                MyTextField(
-                  hintText: "Email",
-                  obscureText: false,
-                  controller: _emailController,
-                  backgroundSvg: 'assets/svg/Login_or_Register1.svg',
-                ),
-
-                const SizedBox(height: 10),
-
-                // pw textfield
-                MyTextField(
-                  hintText: "Password",
-                  obscureText: true,
-                  controller: _pwController,
-                  backgroundSvg: 'assets/svg/Login_or_Register3.svg',
-                ),
-
-                const SizedBox(height: 25),
-                // login button
-                MyButton(text: "Login", onTap: login, width: 150, height: 46),
-
-                const SizedBox(height: 25),
-              ],
+                  const SizedBox(height: 25),
+                  MyTextField(
+                    hintText: "Email",
+                    obscureText: false,
+                    controller: _emailController,
+                    backgroundImage: icons.SvgIcons.loginField1,
+                  ),
+                  const SizedBox(height: 10),
+                  MyTextField(
+                    hintText: "Password",
+                    obscureText: true,
+                    controller: _pwController,
+                    backgroundImage: icons.SvgIcons.loginField3,
+                  ),
+                  const SizedBox(height: 25),
+                  MyButton(text: "Login", onTap: login, width: 150, height: 46),
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
           ),
 
+          // Фиксированный текст снизу
           Positioned(
-            bottom: 30,
             left: 0,
             right: 0,
+            bottom: 30,
             child: Center(
               child: RichText(
                 text: TextSpan(

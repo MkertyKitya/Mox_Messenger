@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:mox_beta/models/svg_icons.dart' as icons;
 import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:mox_beta/components/my_button.dart';
 import 'package:mox_beta/components/my_textfield.dart';
@@ -99,112 +100,119 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final bool keyboardOpen = bottomInset > 0;
+
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // logo
-                SvgPicture.asset(
-                  'assets/svg/Logo.svg',
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.contain,
-                ),
+          // Прокручиваемая часть
+          SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: EdgeInsets.only(bottom: keyboardOpen ? 0 : 120),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 80),
 
-                const SizedBox(height: 50),
+                  // PNG логотип
+                  SizedBox(width: 200, height: 200, child: icons.SvgIcons.logo),
 
-                // welcome back message
-                Text(
-                  "Let's create an accout for you!",
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.inversePrimary,
-                    fontSize: 20,
-                  ),
-                ),
+                  const SizedBox(height: 50),
 
-                const SizedBox(height: 25),
-
-                // nickname
-                MyTextField(
-                  hintText: "Nick name",
-                  obscureText: false,
-                  controller: _nickController,
-                  backgroundSvg: 'assets/svg/Login_or_Register1.svg',
-                ),
-
-                const SizedBox(height: 10),
-                // email textfield
-                MyTextField(
-                  hintText: "Email",
-                  obscureText: false,
-                  controller: _emailController,
-                  backgroundSvg: 'assets/svg/Login_or_Register2.svg',
-                ),
-
-                const SizedBox(height: 10),
-
-                // pw textfield
-                MyTextField(
-                  hintText: "Password",
-                  obscureText: true,
-                  controller: _pwController,
-                  backgroundSvg: 'assets/svg/Login_or_Register3.svg',
-                ),
-
-                const SizedBox(height: 10),
-
-                // confirm pw textfield
-                MyTextField(
-                  hintText: "Confirm password",
-                  obscureText: true,
-                  controller: _confirmPwController,
-                  backgroundSvg: 'assets/svg/Login_or_Register3.svg',
-                ),
-
-                const SizedBox(height: 25),
-                // Register button
-                MyButton(
-                  text: "Register",
-                  onTap: register,
-                  width: 150,
-                  height: 46,
-                ),
-
-                const SizedBox(height: 25),
-
-                // register now
-              ],
-            ),
-          ),
-          Positioned(
-            bottom: 30,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: RichText(
-                text: TextSpan(
-                  text: "Already have an account? ",
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.inversePrimary,
-                  ),
-                  children: [
-                    TextSpan(
-                      text: "Login now!",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      recognizer: TapGestureRecognizer()..onTap = widget.onTap,
+                  Text(
+                    "Let's create an account for you!",
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.inversePrimary,
+                      fontSize: 20,
                     ),
-                  ],
-                ),
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  // Nickname
+                  MyTextField(
+                    hintText: "Nick name",
+                    obscureText: false,
+                    controller: _nickController,
+                    backgroundImage: icons.SvgIcons.loginField1,
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // Email
+                  MyTextField(
+                    hintText: "Email",
+                    obscureText: false,
+                    controller: _emailController,
+                    backgroundImage: icons.SvgIcons.loginField1,
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // Password
+                  MyTextField(
+                    hintText: "Password",
+                    obscureText: true,
+                    controller: _pwController,
+                    backgroundImage: icons.SvgIcons.loginField3,
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // Confirm password
+                  MyTextField(
+                    hintText: "Confirm password",
+                    obscureText: true,
+                    controller: _confirmPwController,
+                    backgroundImage: icons.SvgIcons.loginField3,
+                  ),
+
+                  const SizedBox(height: 25),
+
+                  MyButton(
+                    text: "Register",
+                    onTap: register,
+                    width: 150,
+                    height: 46,
+                  ),
+
+                  const SizedBox(height: 40),
+                ],
               ),
             ),
           ),
+
+          // Нижний текст — скрывается при клавиатуре
+          if (!keyboardOpen)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 30),
+                child: RichText(
+                  text: TextSpan(
+                    text: "Already have an account? ",
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.inversePrimary,
+                    ),
+                    children: [
+                      TextSpan(
+                        text: "Login now!",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = widget.onTap,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
