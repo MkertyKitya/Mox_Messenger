@@ -390,7 +390,9 @@ class _ChatPageState extends State<ChatPage> {
                 child: Container(
                   decoration: const BoxDecoration(
                     image: DecorationImage(
-                      image: AssetImage('assets/svg/background_chat_page.png'),
+                      image: AssetImage(
+                        'assets/images/background_chat_page.png',
+                      ),
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -441,22 +443,29 @@ class _ChatPageState extends State<ChatPage> {
           ),
         ],
       ),
-      actions: [
-        ZegoSendCallInvitationButton(
-          isVideoCall: true,
-          buttonSize: const Size(36, 36),
-          icon: ButtonIcon(icon: icons.SvgIcons.callButton),
-          invitees: [
-            ZegoUIKitUser(id: widget.receiverID, name: widget.receiverNickname),
-          ],
-          onPressed: (code, message, errorInvitees) {
-            if (errorInvitees.isNotEmpty) {
-              _showSnack('Не удалось отправить приглашение на звонок');
-            }
-          },
-        ),
-        const SizedBox(width: 12),
-      ],
+      // actions: [
+      //   ZegoSendCallInvitationButton(
+      //     isVideoCall: true,
+      //     buttonSize: const Size(36, 36),
+      //     icon: ButtonIcon(
+      //       icon: SizedBox(
+      //         width: 0,
+      //         height: 0,
+      //         child: icons.SvgIcons.callButton,
+      //       ),
+      //     ),
+
+      //     invitees: [
+      //       ZegoUIKitUser(id: widget.receiverID, name: widget.receiverNickname),
+      //     ],
+      //     onPressed: (code, message, errorInvitees) {
+      //       if (errorInvitees.isNotEmpty) {
+      //         _showSnack('Не удалось отправить приглашение на звонок');
+      //       }
+      //     },
+      //   ),
+      //   const SizedBox(width: 12),
+      // ],
     );
   }
 
@@ -561,14 +570,14 @@ class _ChatPageState extends State<ChatPage> {
 
     // Use SvgIcons.instance.iconWidget for ad-hoc icons not exposed as getters
     final Widget emojiIcon = icons.SvgIcons.instance.iconWidget(
-      'assets/svg/send_emoji_button.svg',
+      'assets/images/send_emoji_button.png',
       width: 24,
       height: 24,
       placeholder: const SizedBox(width: 24, height: 24),
     );
 
     final Widget pinIcon = icons.SvgIcons.instance.iconWidget(
-      'assets/svg/pinning_content.svg',
+      'assets/images/pinning_content.png',
       width: 24,
       height: 24,
       placeholder: const SizedBox(width: 24, height: 24),
@@ -588,8 +597,8 @@ class _ChatPageState extends State<ChatPage> {
         height: 24,
         child: icons.SvgIcons.instance.iconWidget(
           _hasText
-              ? 'assets/svg/send_message_button.svg'
-              : 'assets/svg/send_voice_message_button.svg',
+              ? 'assets/images/send_message_button.png'
+              : 'assets/images/send_voice_message_button.png',
           width: 24,
           height: 24,
           placeholder: const SizedBox(width: 24, height: 24),

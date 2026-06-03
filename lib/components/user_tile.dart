@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:mox_beta/models/svg_icons.dart' as icons;
 
 class UserTile extends StatelessWidget {
   final String name;
@@ -83,16 +84,8 @@ class UserTile extends StatelessWidget {
                     // Иконка прочтения (если нет непрочитанных)
                     if (unread == 0)
                       (readed
-                          ? SvgPicture.asset(
-                              'assets/svg/ReadTrue.svg',
-                              width: 16,
-                              height: 16,
-                            )
-                          : SvgPicture.asset(
-                              'assets/svg/ReadFalse.svg',
-                              width: 16,
-                              height: 16,
-                            )),
+                          ? icons.SvgIcons.readTrue
+                          : icons.SvgIcons.readFalse),
 
                     if (unread == 0) const SizedBox(width: 6),
 
