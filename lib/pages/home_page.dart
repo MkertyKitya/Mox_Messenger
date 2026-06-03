@@ -12,9 +12,6 @@ import 'package:mox_beta/pages/chat_page.dart';
 import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:mox_beta/services/chat/chat_service.dart';
 import 'package:mox_beta/models/svg_icons.dart' as icons;
-import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
-import 'package:mox_beta/services/zego_config.dart';
-import 'package:zego_uikit_signaling_plugin/zego_uikit_signaling_plugin.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -41,16 +38,6 @@ class _HomePageState extends State<HomePage> {
     _currentUid = _authService.getCurrentUser()!.uid;
     _chatService.initChatCache(_currentUid);
     _chatStream = _chat_service_streamSafe();
-
-    ZegoUIKitPrebuiltCallInvitationService().init(
-      appID: ZegoConfig.appID,
-      appSign: ZegoConfig.appSign,
-      userID: _currentUid,
-      userName:
-          _authService.getCurrentUser()?.displayName ??
-          _authService.getCurrentUser()!.email!.split('@')[0],
-      plugins: [ZegoUIKitSignalingPlugin()],
-    );
   }
 
   // keep initState tidy and avoid long expressions inline
@@ -110,27 +97,6 @@ class _HomePageState extends State<HomePage> {
       appBar: _HomeAppBar(
         controller: _searchController,
         onChanged: _onSearchChanged,
-      ),
-      floatingActionButton: ZegoUIKitPrebuiltCallFloatingButton(
-        platformQuery: ZegoUIKitPrebuiltCallPlatformQuery.onlyEnable(
-          android: true,
-          ios: true,
-        ),
-        appID: ZegoConfig.appID,
-        appSign: ZegoConfig.appSign,
-        userID: _currentUid,
-        userName:
-            _authService.getCurrentUser()?.displayName ??
-            _authService.getCurrentUser()!.email!.split('@')[0],
-        tokenQuery: (ZegoUIKitUser zegoUser) {
-          return const Future.value("token");
-        },
-        requireConfig: (ZegoCallInvitationData data) {
-          final isGroupCall = data.invitees.length > 1;
-          return isGroupCall
-              ? ZegoCallConfig.groupVideoCall()
-              : ZegoCallConfig.oneOnOneVideoCall();
-        },
       ),
       drawer: const MyDrawer(),
       body: Column(

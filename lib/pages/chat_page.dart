@@ -1,17 +1,22 @@
 // lib/pages/chat_page.dart
 import 'dart:async';
 
+import 'package:zego_uikit/zego_uikit.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mox_beta/models/svg_icons.dart' as icons;
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
-import 'package:url_launcher/url_launcher.dart';
+
 import 'package:mox_beta/components/chat_bubble.dart';
 import 'package:mox_beta/components/user_avatar.dart' as ua;
 import 'package:mox_beta/services/auth/auth_service.dart';
 import 'package:mox_beta/services/chat/chat_service.dart';
+import 'package:mox_beta/services/zego_config.dart';
+import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
+import 'package:zego_uikit_signaling_plugin/zego_uikit_signaling_plugin.dart';
 
 import 'package:mox_beta/pages/home_page.dart';
 
@@ -66,6 +71,16 @@ class _ChatPageState extends State<ChatPage> {
     super.initState();
 
     _currentUserId = _authService.getCurrentUser()!.uid;
+
+    ZegoUIKitPrebuiltCallInvitationService().init(
+      appID: ZegoConfig.appID,
+      appSign: ZegoConfig.appSign,
+      userID: _currentUserId,
+      userName:
+          _authService.getCurrentUser()?.displayName ??
+          _authService.getCurrentUser()!.email!.split('@')[0],
+      plugins: [ZegoUIKitSignalingPlugin()],
+    );
 
     _messageController.addListener(_handleTextChanged);
 
@@ -215,18 +230,6 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  Future<void> _handleCallTap() async {
-    final phone = widget.receiverPhone?.trim();
-    if (phone == null || phone.isEmpty) {
-      _showSnack('Номер телефона не указан');
-      return;
-    }
-
-    final uri = Uri(scheme: 'tel', path: phone);
-    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!launched) _showSnack('Не удалось открыть набор номера');
-  }
-
   Future<void> _handlePickMedia() async {
     final pickedType = await showModalBottomSheet<_MediaPickType>(
       context: context,
@@ -366,7 +369,7 @@ class _ChatPageState extends State<ChatPage> {
     // Main layout: keep build light and avoid heavy operations here.
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) async {
+      onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
         _goBackToHome(context);
       },
@@ -405,20 +408,19 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildPreamble(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      color: theme.colorScheme.tertiary,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
+    return AppBar(
+      backgroundColor: theme.colorScheme.tertiary,
+      elevation: 0,
+      foregroundColor: theme.colorScheme.inversePrimary,
+      leadingWidth: 48,
+      leading: IconButton(
+        iconSize: 24,
+        padding: const EdgeInsets.only(left: 12),
+        icon: SizedBox(width: 24, height: 24, child: icons.SvgIcons.backButton),
+        onPressed: () => _goBackToHome(context),
+      ),
+      title: Row(
         children: [
-          GestureDetector(
-            onTap: () => _goBackToHome(context),
-            child: SizedBox(
-              width: 24,
-              height: 24,
-              child: icons.SvgIcons.backButton,
-            ),
-          ),
-          const SizedBox(width: 12),
           ua.UserAvatar(
             nickname: widget.receiverNickname,
             size: 48,
@@ -437,16 +439,24 @@ class _ChatPageState extends State<ChatPage> {
               ),
             ),
           ),
-          GestureDetector(
-            onTap: _handleCallTap,
-            child: SizedBox(
-              width: 24,
-              height: 24,
-              child: icons.SvgIcons.callButton,
-            ),
-          ),
         ],
       ),
+      actions: [
+        ZegoSendCallInvitationButton(
+          isVideoCall: true,
+          buttonSize: const Size(36, 36),
+          icon: ButtonIcon(icon: icons.SvgIcons.callButton),
+          invitees: [
+            ZegoUIKitUser(id: widget.receiverID, name: widget.receiverNickname),
+          ],
+          onPressed: (code, message, errorInvitees) {
+            if (errorInvitees.isNotEmpty) {
+              _showSnack('Не удалось отправить приглашение на звонок');
+            }
+          },
+        ),
+        const SizedBox(width: 12),
+      ],
     );
   }
 
